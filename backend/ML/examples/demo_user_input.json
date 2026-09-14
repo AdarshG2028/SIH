@@ -1,0 +1,25 @@
+{
+  "requestId": "BDMS-REQ-20260916-LNL-001",
+  "department": "Engineering",
+  "maintenanceType": "Track Maintenance",
+  "priority": "MEDIUM",
+  "sectionId": "LNL-PUNE",
+  "fromLocation": "Lonavala",
+  "toLocation": "Pune",
+  "fromKm": 45.0,
+  "toKm": 52.0,
+  "schedulingPreferences": {
+    "preferredDate": "16/09/2026",
+    "durationHours": 3,
+    "preferredStartTime": "01:00 AM",
+    "preferredEndTime": "05:00 AM"
+  },
+  "resources": {
+    "workersRequired": 10,
+    "equipmentRequired": [
+      "Tamping Machine"
+    ],
+    "additionalNotes": "Ballast tamping, track alignment, and joint inspection on Up-line"
+  },
+  "canBeCombined": true
+}

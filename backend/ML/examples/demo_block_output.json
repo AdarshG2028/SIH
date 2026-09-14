@@ -1,0 +1,172 @@
+{
+  "requestId": "BDMS-REQ-20260916-LNL-001",
+  "status": "APPROVED_RECOMMENDED",
+  "sectionId": "LNL-PUNE",
+  "fromLocation": "Lonavala",
+  "toLocation": "Pune",
+  "fromKm": 45.0,
+  "toKm": 52.0,
+  "linearSpanKm": 7.0,
+  "lineConfiguration": "DOUBLE_LINE_ELECTRIFIED (Adjacent line available under caution order)",
+  "department": "Engineering",
+  "maintenanceType": "Track Maintenance",
+  "priority": "MEDIUM",
+  "userPreferences": {
+    "preferredDate": "2026-09-16",
+    "durationHours": 3.0,
+    "preferredStartTime": "01:00",
+    "preferredEndTime": "05:00",
+    "workersRequired": 10,
+    "equipmentRequired": [
+      "Tamping Machine"
+    ],
+    "additionalNotes": "Ballast tamping, track alignment, and joint inspection on Up-line",
+    "canBeCombined": true
+  },
+  "safetyProtocols": {
+    "speedRestriction": "30 km/h caution order for 24h post-work",
+    "safetyPrecautions": "Banner flags and detonators placed at 600m & 1200m; engineering lookout protection active; track circuit insulation intact.",
+    "powerBlockRequired": false,
+    "trafficBlockRequired": true
+  },
+  "recommendedWindow": {
+    "date": "2026-09-16",
+    "startTime": "01:00",
+    "endTime": "04:00",
+    "durationHours": 3.0,
+    "trafficLevel": "VERY_LOW",
+    "trafficScore": 100.0,
+    "weatherSuitable": true,
+    "overallScore": 100
+  },
+  "multiDepartmentCoordination": {
+    "integratedDepartments": [
+      "Engineering",
+      "Signal & Telecommunication (S&T)",
+      "Traction Distribution (TRD)"
+    ],
+    "isMultiDepartment": true,
+    "downtimeSavedHours": 4.0,
+    "primaryTask": {
+      "department": "Engineering",
+      "work": "Track Maintenance",
+      "durationHours": 3.0,
+      "workers": 10,
+      "equipment": [
+        "Tamping Machine"
+      ],
+      "span": "Km 45.0 – 52.0"
+    },
+    "coLocatedTasks": [
+      {
+        "taskId": "TASK-LNL-PUNE-OHE-001",
+        "department": "Traction Distribution (TRD)",
+        "description": "Inspect contact wire wear, stagger, and dropper fittings (Km 46-50)",
+        "taskType": "OHE Inspection",
+        "durationHours": 2.5,
+        "workers": 6,
+        "equipment": [
+          "Tower Wagon"
+        ],
+        "span": "Km 46.0 – 50.0"
+      },
+      {
+        "taskId": "TASK-LNL-PUNE-SIG-001",
+        "department": "Signal & Telecommunication (S&T)",
+        "description": "Routine track circuit insulation & point detection check (Km 48)",
+        "taskType": "Signal Testing",
+        "durationHours": 1.5,
+        "workers": 4,
+        "equipment": [
+          "Signal Testing Equipment"
+        ],
+        "span": "Km 48.0 – 49.5"
+      }
+    ]
+  },
+  "interDepartmentSequencing": [
+    {
+      "phase": 1,
+      "timeWindow": "01:00 – 01:15",
+      "department": "Traction Distribution (TRD)",
+      "safetyAction": "25 kV AC OHE Power Block Isolation",
+      "operatingProtocol": "Traction Power Controller (TPC) confirmation & discharge rod earthing"
+    },
+    {
+      "phase": 2,
+      "timeWindow": "01:15 – 03:35",
+      "department": "Engineering (P-Way)",
+      "safetyAction": "Main Track Possession & Heavy Machinery Run",
+      "operatingProtocol": "Tamping, alignment, and ballast packing inside protected corridor"
+    },
+    {
+      "phase": 3,
+      "timeWindow": "03:35 – 03:50",
+      "department": "Signal & Telecommunication (S&T)",
+      "safetyAction": "Track Circuit Insulation & Point Detection Testing",
+      "operatingProtocol": "Point motor facing-point lock test & dummy route clearance certificate"
+    },
+    {
+      "phase": 4,
+      "timeWindow": "03:50 – 04:00",
+      "department": "TRD / Operations",
+      "safetyAction": "Track Clearance, Re-energization & Line Reopening",
+      "operatingProtocol": "Traction power re-energized; track declared safe; 30 km/h caution order activated"
+    }
+  ],
+  "corridorStarvationAnalysis": {
+    "historicalDemandedBlocks": 12,
+    "historicalGrantedBlocks": 4,
+    "historicalDeniedBlocks": 8,
+    "grantRatioPct": 33.3,
+    "starvationLevel": "HIGH_UNDER_ALLOCATION",
+    "justification": "Corridor received only 33.3% of demanded maintenance blocks in past 60 days. Deferral poses severe track geometry & fracture risks."
+  },
+  "blockProductivityAndBuffers": {
+    "totalPossessionDuration": "3.0 hours (180 mins)",
+    "effectiveWorkTime": "2h 15m (135 mins)",
+    "machineShuntingAndTransit": "30 mins",
+    "mandatorySafetyBuffer": "15 mins",
+    "overrunRiskBuffer": "15 mins",
+    "productivityRatio": "75.0%",
+    "overrunProtectionNote": "Includes 15m mandatory safety clearance + 15m duration-risk buffer to prevent passenger train detention."
+  },
+  "specialTrafficCalendar": {
+    "isExclusionWindow": false,
+    "calendarStatus": "NORMAL_OPERATING_SCHEDULE",
+    "holidayEmbargo": "None",
+    "notes": "Corridor traffic profile is normal; no festival passenger rush moratorium active."
+  },
+  "reasons": [
+    "Scheduled within user's preferred window (01:00–05:00) with VERY_LOW train traffic.",
+    "Weather conditions are clear and suitable (rain prob: 5%, wind: 9 km/h).",
+    "Required track machinery confirmed available: Tamping Machine.",
+    "Workforce requirement fulfilled (20 workers allocated).",
+    "Multi-Department Shadow Block achieved! Integrated 2 compatible task(s) from Engineering, Signal & Telecommunication (S&T), Traction Distribution (TRD), saving 4.0 hours of separate track downtime.",
+    "Corridor Starvation Alert: Corridor has received only 33.3% of demanded blocks in the past 60 days. Approval justified to avoid safety risk escalation."
+  ],
+  "alternativeOptions": [
+    {
+      "optionId": "ALTERNATIVE_1",
+      "date": "2026-09-16",
+      "startTime": "01:30",
+      "endTime": "04:30",
+      "durationHours": 3.0,
+      "trafficLevel": "VERY_LOW",
+      "trafficScore": 100.0,
+      "weatherSuitable": true,
+      "score": 100
+    },
+    {
+      "optionId": "ALTERNATIVE_2",
+      "date": "2026-09-16",
+      "startTime": "02:00",
+      "endTime": "05:00",
+      "durationHours": 3.0,
+      "trafficLevel": "LOW",
+      "trafficScore": 92.5,
+      "weatherSuitable": true,
+      "score": 100
+    }
+  ]
+}

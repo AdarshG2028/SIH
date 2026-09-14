@@ -1,0 +1,31 @@
+{
+    "model": "Weighted Ensemble",
+    "components": [
+        "LightGBM",
+        "Temporal CNN",
+        "Random Forest"
+    ],
+    "weights": {
+        "LightGBM": 0.5,
+        "Temporal_CNN": 0.3,
+        "Random_Forest": 0.2
+    },
+    "threshold": 0.51,
+    "precision": 0.11629452938646229,
+    "recall": 0.8492290119931468,
+    "f1_score": 0.2045743766122098,
+    "roc_auc": 0.6420240139477549,
+    "pr_auc": 0.12082920304624073,
+    "predicted_positive": 25573,
+    "test_samples": 40840,
+    "confusion_matrix": [
+        [
+            14739,
+            22599
+        ],
+        [
+            528,
+            2974
+        ]
+    ]
+}

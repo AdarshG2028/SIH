@@ -1,0 +1,73 @@
+{
+  "source": "Traction Distribution Management System (TDMS)",
+  "department": "Traction Distribution (TRD)",
+  "generated_at": "2026-09-11T12:00:00Z",
+  "tasks": [
+    {
+      "task_id": "TDMS-OHE-2026-001",
+      "department": "Traction Distribution (TRD)",
+      "asset_id": "AST019469",
+      "asset_type": "OHE",
+      "location": "Km 46.0 – 50.0 (Lonavala to Pune Catenary Line)",
+      "corridor": "LNL-PUNE",
+      "from_km": 46.0,
+      "to_km": 50.0,
+      "task_type": "Contact Wire Stagger, Height & Dropper Overhaul",
+      "criticality": "High",
+      "urgency": "Short-term",
+      "due_date": "2026-09-18",
+      "overdue_days": 1,
+      "estimated_duration": 2.5,
+      "safety_impact": "Contact wire grooving reaching 30% wear limit; risk of pantograph entangling",
+      "required_resources": {
+        "workers": 6,
+        "equipment": ["Tower Wagon"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "TDMS-OHE-2026-002",
+      "department": "Traction Distribution (TRD)",
+      "asset_id": "TEST-RKMP-OHE-001",
+      "asset_type": "OHE",
+      "location": "Km 13.0 – 14.5 (Rani Kamlapati Feeder Mast 14/2)",
+      "corridor": "BPL-RKMP",
+      "from_km": 13.0,
+      "to_km": 14.5,
+      "task_type": "Isolator Switch & Feeder Arcing Horn Maintenance",
+      "criticality": "Critical",
+      "urgency": "Urgent",
+      "due_date": "2026-09-11",
+      "overdue_days": 4,
+      "estimated_duration": 2.0,
+      "safety_impact": "Severe contact wire arcing reported by Loco Pilot of Train 12155",
+      "required_resources": {
+        "workers": 5,
+        "equipment": ["Tower Wagon", "OHE Inspection Car"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "TDMS-OHE-2026-003",
+      "department": "Traction Distribution (TRD)",
+      "asset_id": "AST019475",
+      "asset_type": "OHE",
+      "location": "Km 49.0 – 51.5 (Ghorawadi Section Insulator)",
+      "corridor": "LNL-PUNE",
+      "from_km": 49.0,
+      "to_km": 51.5,
+      "task_type": "Section Insulator Cleaning & Tensioning",
+      "criticality": "Low",
+      "urgency": "Flexible",
+      "due_date": "2026-09-30",
+      "overdue_days": 0,
+      "estimated_duration": 2.0,
+      "safety_impact": "Routine periodic cleaning to prevent flashover during dewy mornings",
+      "required_resources": {
+        "workers": 4,
+        "equipment": ["Tower Wagon"]
+      },
+      "status": "pending"
+    }
+  ]
+}

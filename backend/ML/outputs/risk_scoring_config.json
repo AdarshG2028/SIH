@@ -1,0 +1,16 @@
+{
+    "roc_auc": 0.6261191211663156,
+    "pr_auc": 0.11605291276399762,
+    "best_f1_threshold": 0.49,
+    "best_f1_precision": 0.11511047754811118,
+    "best_f1_recall": 0.7246214245653393,
+    "best_f1_score": 0.19866225878373184,
+    "risk_levels": {
+        "LOW": "< 0.20",
+        "MEDIUM": "0.20 - 0.39",
+        "HIGH": "0.40 - 0.59",
+        "CRITICAL": ">= 0.60"
+    },
+    "high_recall_threshold": 0.41,
+    "practical_threshold": 0.33
+}

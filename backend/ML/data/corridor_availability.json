@@ -1,0 +1,38 @@
+{
+  "source": "Control Office Application (COA) / Track Management",
+  "generated_at": "2026-09-11T14:00:00Z",
+  "corridors": {
+    "LNL-PUNE": {
+      "corridor_id": "LNL-PUNE",
+      "name": "Lonavala – Pune Junction Double Line Suburban Corridor",
+      "total_length_km": 64.0,
+      "max_permissible_speed_kmph": 110,
+      "traction_type": "25kV AC Electric",
+      "block_sections": [
+        {"section_code": "LNL-KM40", "start_km": 0.0, "end_km": 40.0, "stations": ["Lonavala", "Kamshet"]},
+        {"section_code": "KM40-KM55", "start_km": 40.0, "end_km": 55.0, "stations": ["Kanhe", "Talegaon", "Ghorawadi", "Dehu Road"]},
+        {"section_code": "KM55-PUNE", "start_km": 55.0, "end_km": 64.0, "stations": ["Akurdi", "Chinchwad", "Pimpri", "Shivajinagar", "Pune Jn"]}
+      ],
+      "traffic_profile": {
+        "suburban_peak_hours": ["07:30-10:30", "17:30-20:30"],
+        "quiet_corridor_hours": ["01:00-04:30"],
+        "intercity_express_slots": ["06:00-07:30", "11:00-14:00", "21:00-23:59"]
+      }
+    },
+    "BPL-RKMP": {
+      "corridor_id": "BPL-RKMP",
+      "name": "Bhopal Junction – Rani Kamlapati Triple Line Section",
+      "total_length_km": 6.0,
+      "max_permissible_speed_kmph": 120,
+      "traction_type": "25kV AC Electric",
+      "block_sections": [
+        {"section_code": "BPL-HAB", "start_km": 0.0, "end_km": 3.0, "stations": ["Bhopal Jn"]},
+        {"section_code": "HAB-RKMP", "start_km": 3.0, "end_km": 6.0, "stations": ["Rani Kamlapati"]}
+      ],
+      "traffic_profile": {
+        "quiet_corridor_hours": ["01:00-04:00"],
+        "high_traffic_hours": ["07:00-12:00", "16:00-22:00"]
+      }
+    }
+  }
+}

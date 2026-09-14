@@ -1,0 +1,95 @@
+{
+  "source": "Track Management System (TMS)",
+  "department": "Engineering",
+  "generated_at": "2026-09-11T12:00:00Z",
+  "tasks": [
+    {
+      "task_id": "TMS-TRK-2026-001",
+      "department": "Engineering",
+      "asset_id": "AST019466",
+      "asset_type": "Track",
+      "location": "Km 45.0 – 52.0 (Lonavala to Pune Up-Line)",
+      "corridor": "LNL-PUNE",
+      "from_km": 45.0,
+      "to_km": 52.0,
+      "task_type": "Track Tamping & Alignment",
+      "criticality": "High",
+      "urgency": "Short-term",
+      "due_date": "2026-09-16",
+      "overdue_days": 2,
+      "estimated_duration": 3.0,
+      "safety_impact": "Track geometry deviation; requires 30 km/h caution order until tamped",
+      "required_resources": {
+        "workers": 10,
+        "equipment": ["Tamping Machine"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "TMS-TRK-2026-002",
+      "department": "Engineering",
+      "asset_id": "TEST-RKMP-TRK-001",
+      "asset_type": "Track",
+      "location": "Km 12.4 – 15.0 (Rani Kamlapati Yard)",
+      "corridor": "BPL-RKMP",
+      "from_km": 12.4,
+      "to_km": 15.0,
+      "task_type": "Rail Weld Defect Rectification",
+      "criticality": "Critical",
+      "urgency": "Urgent",
+      "due_date": "2026-09-12",
+      "overdue_days": 5,
+      "estimated_duration": 2.5,
+      "safety_impact": "Ultrasonic flaw detection detected rail head corrugation and fissure defect",
+      "required_resources": {
+        "workers": 8,
+        "equipment": ["Flash Butt Welding Machine", "Track Recording Car"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "TMS-TRK-2026-003",
+      "department": "Engineering",
+      "asset_id": "AST019472",
+      "asset_type": "Switch",
+      "location": "Km 48.2 (Talegaon Crossover)",
+      "corridor": "LNL-PUNE",
+      "from_km": 48.0,
+      "to_km": 48.5,
+      "task_type": "Turnout Packing & Switch Tongue Rail Renewal",
+      "criticality": "Medium",
+      "urgency": "Flexible",
+      "due_date": "2026-09-22",
+      "overdue_days": 0,
+      "estimated_duration": 2.0,
+      "safety_impact": "Moderate switch tongue wear, safe for 50 km/h turnout speed",
+      "required_resources": {
+        "workers": 6,
+        "equipment": ["Rail Crane"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "TMS-TRK-2026-004",
+      "department": "Engineering",
+      "asset_id": "TEST-BPL-TRK-001",
+      "asset_type": "Track",
+      "location": "Km 835.0 – 838.0 (Bhopal Jn North Approach)",
+      "corridor": "BPL-ET",
+      "from_km": 835.0,
+      "to_km": 838.0,
+      "task_type": "Ballast Cleaning & Deep Screening",
+      "criticality": "Medium",
+      "urgency": "Flexible",
+      "due_date": "2026-09-25",
+      "overdue_days": 0,
+      "estimated_duration": 4.0,
+      "safety_impact": "Caked ballast reducing drainage capability during monsoon",
+      "required_resources": {
+        "workers": 15,
+        "equipment": ["Ballast Cleaning Machine", "Tamping Machine"]
+      },
+      "status": "pending"
+    }
+  ]
+}

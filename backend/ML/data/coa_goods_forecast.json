@@ -1,0 +1,71 @@
+{
+  "source": "Control Office Application (COA)",
+  "forecast_type": "Goods & Freight Train Daily Corridor Forecast",
+  "generated_at": "2026-09-11T14:00:00Z",
+  "forecasts": [
+    {
+      "forecast_id": "COA-FRT-20260916-001",
+      "train_number": "BOXN-8821",
+      "train_name": "Loaded Coal Rake (Korba → Khopoli)",
+      "rake_type": "BOXN",
+      "corridor": "LNL-PUNE",
+      "origin": "KRBA",
+      "destination": "KHPI",
+      "estimated_corridor_entry": "04:45",
+      "estimated_corridor_exit": "05:40",
+      "priority": "HIGH_FREIGHT",
+      "speed_kmph": 65,
+      "can_be_regulated": true,
+      "max_regulation_minutes": 45,
+      "notes": "Can be held at Lonavala Down Goods Loop if maintenance block extends to 05:15"
+    },
+    {
+      "forecast_id": "COA-FRT-20260916-002",
+      "train_number": "CONCOR-1092",
+      "train_name": "Container Parcel Rake (JNPT → Pune ICD)",
+      "rake_type": "BLCA/BLCB",
+      "corridor": "LNL-PUNE",
+      "origin": "JNPT",
+      "destination": "GIT",
+      "estimated_corridor_entry": "00:15",
+      "estimated_corridor_exit": "01:00",
+      "priority": "TIME_TABLED_CARGO",
+      "speed_kmph": 75,
+      "can_be_regulated": false,
+      "max_regulation_minutes": 0,
+      "notes": "Time-sensitive parcel train, guaranteed delivery slot"
+    },
+    {
+      "forecast_id": "COA-FRT-20260916-003",
+      "train_number": "BTPN-4412",
+      "train_name": "Petroleum Tanker Empty (Pune → Trombay BPCL)",
+      "rake_type": "BTPN",
+      "corridor": "LNL-PUNE",
+      "origin": "PUNE",
+      "destination": "TMBY",
+      "estimated_corridor_entry": "10:45",
+      "estimated_corridor_exit": "11:50",
+      "priority": "MEDIUM_FREIGHT",
+      "speed_kmph": 60,
+      "can_be_regulated": true,
+      "max_regulation_minutes": 60,
+      "notes": "Empty rakes can be held at Talegaon station loop"
+    },
+    {
+      "forecast_id": "COA-FRT-20260916-004",
+      "train_number": "BOXN-9914",
+      "train_name": "Iron Ore Rake (Bhilai → Bhopal BHEL)",
+      "rake_type": "BOXN",
+      "corridor": "BPL-RKMP",
+      "origin": "BIA",
+      "destination": "BPL",
+      "estimated_corridor_entry": "03:45",
+      "estimated_corridor_exit": "04:30",
+      "priority": "MEDIUM_FREIGHT",
+      "speed_kmph": 55,
+      "can_be_regulated": true,
+      "max_regulation_minutes": 40,
+      "notes": "Regulatable at Habibganj outer siding"
+    }
+  ]
+}

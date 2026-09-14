@@ -1,0 +1,74 @@
+{
+  "model": "RandomForestClassifier",
+  "model_path": "models/best_predictive_maintenance_model.joblib",
+  "prediction_source": "outputs/ensemble_predictions.csv",
+  "explained_rows": 5000,
+  "total_matched_rows": 40840,
+  "raw_feature_count": 51,
+  "numeric_feature_count": 47,
+  "categorical_feature_count": 4,
+  "transformed_feature_count": 8616,
+  "top_features": [
+    {
+      "feature": "numeric__total_maintenance_cost",
+      "mean_abs_shap": 0.01136954705338107
+    },
+    {
+      "feature": "numeric__maintenance_count",
+      "mean_abs_shap": 0.008386676346120054
+    },
+    {
+      "feature": "numeric__total_train_passages",
+      "mean_abs_shap": 0.006614806653045922
+    },
+    {
+      "feature": "numeric__total_downtime",
+      "mean_abs_shap": 0.0056689605690968875
+    },
+    {
+      "feature": "numeric__days_since_maintenance",
+      "mean_abs_shap": 0.005117489199970228
+    },
+    {
+      "feature": "numeric__maintenance_pressure",
+      "mean_abs_shap": 0.004212441868729856
+    },
+    {
+      "feature": "numeric__maintenance_count_365d",
+      "mean_abs_shap": 0.004151747106723783
+    },
+    {
+      "feature": "numeric__maintenance_cost_365d",
+      "mean_abs_shap": 0.0036003177638616306
+    },
+    {
+      "feature": "numeric__avg_downtime",
+      "mean_abs_shap": 0.003400059958758341
+    },
+    {
+      "feature": "numeric__cumulative_usage",
+      "mean_abs_shap": 0.002455415688885075
+    },
+    {
+      "feature": "numeric__maintenance_count_180d",
+      "mean_abs_shap": 0.0017956998224160144
+    },
+    {
+      "feature": "numeric__condition_decline",
+      "mean_abs_shap": 0.001438023975811828
+    },
+    {
+      "feature": "numeric__maintenance_cost_90d",
+      "mean_abs_shap": 0.0012442708589395037
+    },
+    {
+      "feature": "numeric__maintenance_cost_180d",
+      "mean_abs_shap": 0.0010715969844832796
+    },
+    {
+      "feature": "numeric__usage_per_day_estimate",
+      "mean_abs_shap": 0.0008031143898105272
+    }
+  ],
+  "shap_version": "0.52.0"
+}

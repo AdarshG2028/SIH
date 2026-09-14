@@ -1,0 +1,197 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Railway AI Block Planner — "Chrome Sunset Control" design system.
+ * All colours are semantic tokens. Never hardcode colours in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --font-display: var(--font-display-family);
+  --font-body: var(--font-body-family);
+  --font-mono: var(--font-mono-family);
+  --font-sans: var(--font-body-family);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Control-room palette */
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-ink3: var(--ink3);
+  --color-line: var(--line);
+  --color-signal: var(--signal);
+  --color-signalsoft: var(--signalsoft);
+  --color-clear: var(--clear);
+  --color-danger: var(--danger);
+  --color-steel: var(--steel);
+  --color-cream: var(--cream);
+
+  --color-chart-1: var(--signal);
+  --color-chart-2: var(--clear);
+  --color-chart-3: var(--steel);
+  --color-chart-4: var(--signalsoft);
+  --color-chart-5: var(--danger);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  --font-display-family: "Oswald", sans-serif;
+  --font-body-family: "IBM Plex Sans", sans-serif;
+  --font-mono-family: "IBM Plex Mono", monospace;
+
+  /*
+   * Light theme. The token names are kept from the original dark palette so no
+   * component markup has to change: --ink is the page ground (now white),
+   * --cream is the primary text (now near-black), --steel stays the muted text.
+   * Accent hues are darkened from their dark-theme values so they still clear
+   * contrast requirements against a white ground.
+   */
+  --ink: #ffffff;
+  --ink2: #f7f8fb;
+  --ink3: #eef1f6;
+  --line: #d6dce7;
+  --signal: #a76a00;
+  --signalsoft: #8a5a00;
+  --clear: #0b7a57;
+  --danger: #c0341f;
+  --steel: #5a6478;
+  --cream: #0f1521;
+
+  --background: var(--ink);
+  --foreground: var(--cream);
+  --card: var(--ink2);
+  --card-foreground: var(--cream);
+  --popover: var(--ink2);
+  --popover-foreground: var(--cream);
+  --primary: var(--signal);
+  --primary-foreground: var(--ink);
+  --secondary: var(--ink3);
+  --secondary-foreground: var(--cream);
+  --muted: var(--ink3);
+  --muted-foreground: var(--steel);
+  --accent: var(--ink3);
+  --accent-foreground: var(--cream);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--signal);
+
+  --gradient-dusk: radial-gradient(
+    120% 90% at 78% 0%,
+    #ffdcb4 0%,
+    #ffe9d6 20%,
+    #f6ecf0 45%,
+    #f2f5fb 72%,
+    #ffffff 100%
+  );
+  --gradient-chrome: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #dfe6f2 30%,
+    #b3bfd4 52%,
+    #eef2f9 60%,
+    #b3bfd4 80%,
+    #dfe6f2 100%
+  );
+  --gradient-vignette: radial-gradient(60% 100% at 50% 0%, transparent 55%, #ffffff 100%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body-family);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@keyframes lamp {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 14px 2px currentColor;
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 5px 0 currentColor;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility dusk {
+  background: var(--gradient-dusk);
+}
+
+@utility vignette {
+  background: var(--gradient-vignette);
+}
+
+@utility chrome {
+  background: var(--gradient-chrome);
+  /* Dark text: the gradient is light metal, and --ink is now the white ground. */
+  color: var(--cream);
+}
+
+@utility hairline {
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+@utility lamp {
+  animation: lamp 1.8s ease-in-out infinite;
+}
+
+@utility rise {
+  animation: rise 0.6s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@utility label-mono {
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}

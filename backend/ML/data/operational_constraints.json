@@ -1,0 +1,119 @@
+{
+  "snapshot_date": "2026-09-05",
+
+  "sections": {
+    "BPL": {
+      "station_name": "Bhopal Junction",
+
+      "traffic_windows": [
+        {
+          "start": "00:00",
+          "end": "01:00",
+          "traffic_level": "LOW"
+        },
+        {
+          "start": "01:00",
+          "end": "04:00",
+          "traffic_level": "VERY_LOW"
+        },
+        {
+          "start": "04:00",
+          "end": "06:00",
+          "traffic_level": "MEDIUM"
+        }
+      ],
+
+      "weather": {
+        "condition": "Clear",
+        "temperature_c": 24,
+        "rain_probability": 0.05,
+        "wind_kmph": 8,
+        "visibility_km": 10
+      },
+
+      "available_teams": [
+        "Signalling",
+        "Track"
+      ]
+    },
+
+    "RKMP": {
+      "station_name": "Rani Kamlapati",
+
+      "traffic_windows": [
+        {
+          "start": "00:00",
+          "end": "01:00",
+          "traffic_level": "LOW"
+        },
+        {
+          "start": "01:00",
+          "end": "04:00",
+          "traffic_level": "VERY_LOW"
+        },
+        {
+          "start": "04:00",
+          "end": "06:00",
+          "traffic_level": "MEDIUM"
+        }
+      ],
+
+      "weather": {
+        "condition": "Clear",
+        "temperature_c": 24,
+        "rain_probability": 0.05,
+        "wind_kmph": 8,
+        "visibility_km": 10
+      },
+
+      "available_teams": [
+        "Track",
+        "OHE"
+      ]
+    },
+
+    "LNL-PUNE": {
+      "station_name": "Lonavala - Pune Section",
+      "traffic_windows": [
+        {
+          "start": "00:00",
+          "end": "01:00",
+          "traffic_level": "LOW"
+        },
+        {
+          "start": "01:00",
+          "end": "04:30",
+          "traffic_level": "VERY_LOW"
+        },
+        {
+          "start": "04:30",
+          "end": "06:00",
+          "traffic_level": "MEDIUM"
+        }
+      ],
+      "weather": {
+        "condition": "Clear",
+        "temperature_c": 22,
+        "rain_probability": 0.05,
+        "wind_kmph": 9,
+        "visibility_km": 10
+      },
+      "available_teams": [
+        "Engineering",
+        "Track",
+        "Traction Distribution (TRD)",
+        "OHE",
+        "Signal & Telecommunication (S&T)",
+        "Signalling"
+      ],
+      "available_equipment": [
+        "Tamping Machine",
+        "Tower Wagon",
+        "Signal Testing Equipment",
+        "Rail Crane",
+        "Track Recording Car"
+      ],
+      "gang_workers_available": 30
+    }
+  }
+}

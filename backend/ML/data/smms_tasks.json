@@ -1,0 +1,73 @@
+{
+  "source": "Signalling Maintenance & Management System (SMMS)",
+  "department": "Signal & Telecommunication (S&T)",
+  "generated_at": "2026-09-11T12:00:00Z",
+  "tasks": [
+    {
+      "task_id": "SMMS-SIG-2026-001",
+      "department": "Signal & Telecommunication (S&T)",
+      "asset_id": "AST019467",
+      "asset_type": "Signal",
+      "location": "Km 48.0 – 49.5 (Talegaon Automatic Signal Section)",
+      "corridor": "LNL-PUNE",
+      "from_km": 48.0,
+      "to_km": 49.5,
+      "task_type": "Track Circuit Insulation & Aspect Relay Testing",
+      "criticality": "High",
+      "urgency": "Short-term",
+      "due_date": "2026-09-17",
+      "overdue_days": 1,
+      "estimated_duration": 1.5,
+      "safety_impact": "Occasional phantom red signal aspect causing automatic train stop",
+      "required_resources": {
+        "workers": 4,
+        "equipment": ["Signal Testing Equipment"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "SMMS-SIG-2026-002",
+      "department": "Signal & Telecommunication (S&T)",
+      "asset_id": "TEST-BPL-SIG-001",
+      "asset_type": "Point Machine",
+      "location": "Bhopal Junction Relay Interlocking Room",
+      "corridor": "BPL-RKMP",
+      "from_km": 0.0,
+      "to_km": 2.0,
+      "task_type": "Electric Point Machine Overhaul & Lock Facing Test",
+      "criticality": "Critical",
+      "urgency": "Urgent",
+      "due_date": "2026-09-10",
+      "overdue_days": 6,
+      "estimated_duration": 2.5,
+      "safety_impact": "Point chatter and detection failure; risk of wrong-route signal clearance",
+      "required_resources": {
+        "workers": 5,
+        "equipment": ["Signal Testing Equipment", "Point Motor Overhaul Kit"]
+      },
+      "status": "pending"
+    },
+    {
+      "task_id": "SMMS-SIG-2026-003",
+      "department": "Signal & Telecommunication (S&T)",
+      "asset_id": "AST019468",
+      "asset_type": "Point Machine",
+      "location": "Km 51.2 (Dehu Road Yard Points)",
+      "corridor": "LNL-PUNE",
+      "from_km": 50.5,
+      "to_km": 52.0,
+      "task_type": "Routine Ground Connection & Obstruction Test",
+      "criticality": "Medium",
+      "urgency": "Flexible",
+      "due_date": "2026-09-24",
+      "overdue_days": 0,
+      "estimated_duration": 1.5,
+      "safety_impact": "Quarterly periodic maintenance to maintain point detection tolerance",
+      "required_resources": {
+        "workers": 3,
+        "equipment": ["Signal Testing Equipment"]
+      },
+      "status": "pending"
+    }
+  ]
+}
