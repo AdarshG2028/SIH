@@ -1,110 +1,57 @@
-const Task = require("../models/Task");
-const AssetRiskScore = require("../models/AssetRiskScore");
+const {
+  loadRiskEnrichedTasks,
+  groupMultiDepartmentLocations,
+} = require("../services/multiDepartmentGrouping.service");
+const { describeDepartmentSynergy } = require("../shared/departmentSynergy");
+const { parseSectionId } = require("../shared/sections");
+const { hasSectionData, listFreeWindows } = require("../services/impact.service");
 
-// Block building is in-memory: every pending task is grouped and joined against
-// its risk score. On a full division (100k+ tasks) that takes minutes, so the
-// planner works from the highest-criticality slice instead of the whole bank.
-const PLANNING_TASK_LIMIT = Number(process.env.PLANNING_TASK_LIMIT) || 6000;
+/**
+ * A real conflict-free window when the location happens to be a section
+ * with seeded train data (rare for these locations in practice — most
+ * multi-department overlaps are at a single station, e.g. Signal/OHE
+ * equipment installed there, not a between-station section — see the #8
+ * planning notes), and an honestly-labeled placeholder otherwise. Either
+ * way the caller gets a real `windowSource` to show, rather than presenting
+ * a guess as if it were computed.
+ */
+async function resolveBlockWindow(location) {
+  const parsed = parseSectionId(location);
+
+  if (parsed.isSection && (await hasSectionData(location))) {
+    const windows = await listFreeWindows(location);
+    const best = [...windows].sort((a, b) => b.durationMinutes - a.durationMinutes)[0];
+
+    if (best) {
+      return {
+        serviceDay: best.serviceDay,
+        windowStart: best.windowStart,
+        windowEnd: best.windowEnd,
+        durationMinutes: best.durationMinutes,
+        affectedTrains: 0, // buildSectionWindows only returns genuinely conflict-free gaps
+        windowSource: "real_network_data",
+      };
+    }
+  }
+
+  // No real train/section data for this location (a bare station code, or
+  // a section outside the seeded dataset) — Task/Asset don't carry km,
+  // crew or equipment fields to estimate this more precisely from real
+  // data, so this is a clearly-labeled placeholder, not a computed figure.
+  return {
+    serviceDay: "Friday",
+    windowStart: "10:00",
+    windowEnd: "12:00",
+    durationMinutes: 120,
+    affectedTrains: 2,
+    windowSource: "estimated",
+  };
+}
 
 const getDemoPlan = async (req, res, next) => {
   try {
-    const departments = ["Track", "OHE", "Signalling"];
-
-    const tasks = await Task.find({
-      status: "pending",
-      department: { $in: departments },
-    })
-      .sort({ criticalityScore: -1 })
-      .limit(PLANNING_TASK_LIMIT)
-      .lean();
-
-    const assetIds = [
-      ...new Set(tasks.map((task) => task.assetId).filter(Boolean)),
-    ];
-
-    const risks = await AssetRiskScore.find({
-      asset_id: { $in: assetIds },
-    })
-      .sort({ snapshot_date: -1 })
-      .lean();
-
-    const riskMap = new Map();
-
-    for (const risk of risks) {
-      if (!riskMap.has(risk.asset_id)) {
-        riskMap.set(risk.asset_id, risk);
-      }
-    }
-
-    const enrichedTasks = tasks
-      .map((task) => ({
-        ...task,
-        risk: riskMap.get(task.assetId),
-      }))
-      .filter((task) => task.risk);
-
-    // Group tasks by location and asset.
-    const grouped = new Map();
-
-    for (const task of enrichedTasks) {
-      const location = task.sectionId;
-
-      if (!grouped.has(location)) {
-        grouped.set(location, new Map());
-      }
-
-      const assetMap = grouped.get(location);
-      const assetKey = task.assetId || task.taskId;
-
-      if (!assetMap.has(assetKey)) {
-        assetMap.set(assetKey, {
-          ...task,
-          findingCount: 1,
-          taskIds: [task.taskId],
-        });
-      } else {
-        const existing = assetMap.get(assetKey);
-
-        existing.findingCount += 1;
-        existing.taskIds.push(task.taskId);
-
-        if (task.risk.risk_score > existing.risk.risk_score) {
-          existing.risk = task.risk;
-        }
-      }
-    }
-
-    // Keep only locations containing multiple departments.
-    const multiDepartmentGroups = [];
-
-    for (const [location, assetMap] of grouped) {
-      const sectionTasks = [...assetMap.values()];
-
-      const locationDepartments = [
-        ...new Set(sectionTasks.map((task) => task.department)),
-      ];
-
-      if (locationDepartments.length >= 2) {
-        multiDepartmentGroups.push({
-          location,
-          tasks: sectionTasks,
-          departments: locationDepartments,
-        });
-      }
-    }
-
-    // Highest-risk locations first.
-    multiDepartmentGroups.sort((a, b) => {
-      const riskA = Math.max(
-        ...a.tasks.map((task) => task.risk.risk_score || 0),
-      );
-
-      const riskB = Math.max(
-        ...b.tasks.map((task) => task.risk.risk_score || 0),
-      );
-
-      return riskB - riskA;
-    });
+    const enrichedTasks = await loadRiskEnrichedTasks();
+    const multiDepartmentGroups = groupMultiDepartmentLocations(enrichedTasks);
 
     const blocks = [];
 
@@ -148,15 +95,19 @@ const getDemoPlan = async (req, res, next) => {
         .filter((task) => !selectedTasks.includes(task))
         .slice(0, 3);
 
+      const departmentsCombined = [...new Set(selectedTasks.map((task) => task.department))];
+      const window = await resolveBlockWindow(group.location);
+
       blocks.push({
         blockId: `BLOCK-${blocks.length + 1}`,
 
         sectionId: group.location,
 
-        serviceDay: "Friday",
-        windowStart: "10:00",
-        windowEnd: "12:00",
-        durationMinutes: 120,
+        serviceDay: window.serviceDay,
+        windowStart: window.windowStart,
+        windowEnd: window.windowEnd,
+        durationMinutes: window.durationMinutes,
+        windowSource: window.windowSource,
 
         tasks: selectedTasks.map((task) => ({
           taskId: task.taskId,
@@ -168,7 +119,7 @@ const getDemoPlan = async (req, res, next) => {
           findingCount: task.findingCount,
         })),
 
-        departments: [...new Set(selectedTasks.map((task) => task.department))],
+        departments: departmentsCombined,
 
         averageRiskScore:
           selectedTasks.reduce((sum, task) => sum + task.risk.risk_score, 0) /
@@ -176,10 +127,16 @@ const getDemoPlan = async (req, res, next) => {
 
         highestRiskScore: highestRisk,
 
-        affectedTrains: 2,
+        affectedTrains: window.affectedTrains,
 
-        predictedDelayMinutes: Math.round(selectedTasks.length * 4),
+        // Real when the window itself is real (genuinely 0 conflicts by
+        // construction); an estimate otherwise — Task/Asset carry no
+        // crew/equipment data to compute a real figure from. See #8
+        // planning notes in backend/docs/NETWORK_DATA.md-adjacent context.
+        predictedDelayMinutes:
+          window.windowSource === "real_network_data" ? 0 : Math.round(selectedTasks.length * 4),
 
+        // Always an estimate — Task/Asset have no cost fields at all.
         estimatedPrice: 10000 + selectedTasks.length * 5000,
 
         recommendation: highestRisk >= 60 ? "Recommended" : "Consider",
@@ -187,15 +144,14 @@ const getDemoPlan = async (req, res, next) => {
         // F7: Why was this block selected?
         whyThis: {
           highestRisk,
-          departmentsCombined: [
-            ...new Set(selectedTasks.map((task) => task.department)),
-          ],
+          departmentsCombined,
           jobsIncluded: selectedTasks.length,
 
           reason:
-            highestRisk >= 60
-              ? "Selected because it contains high-risk maintenance work and combines work across departments at the same location."
-              : "Selected because it combines maintenance work across multiple departments at the same location.",
+            (highestRisk >= 60
+              ? "Selected because it contains high-risk maintenance work and combines work across departments at the same location. "
+              : "Selected because it combines maintenance work across multiple departments at the same location. ") +
+            describeDepartmentSynergy(departmentsCombined),
 
           pushedAside: pushedAsideTasks.map((task) => ({
             taskId: task.taskId,
@@ -257,103 +213,8 @@ const getDemoPlan = async (req, res, next) => {
 
 const getPeriodPlan = async (req, res, next) => {
   try {
-    const departments = ["Track", "OHE", "Signalling"];
-
-    const tasks = await Task.find({
-      status: "pending",
-      department: { $in: departments },
-    })
-      .sort({ criticalityScore: -1 })
-      .limit(PLANNING_TASK_LIMIT)
-      .lean();
-
-    const assetIds = [
-      ...new Set(tasks.map((task) => task.assetId).filter(Boolean)),
-    ];
-
-    const risks = await AssetRiskScore.find({
-      asset_id: { $in: assetIds },
-    })
-      .sort({ snapshot_date: -1 })
-      .lean();
-
-    const riskMap = new Map();
-
-    for (const risk of risks) {
-      if (!riskMap.has(risk.asset_id)) {
-        riskMap.set(risk.asset_id, risk);
-      }
-    }
-
-    const enrichedTasks = tasks
-      .map((task) => ({
-        ...task,
-        risk: riskMap.get(task.assetId),
-      }))
-      .filter((task) => task.risk);
-
-    // Group by location and asset.
-    const grouped = new Map();
-
-    for (const task of enrichedTasks) {
-      const location = task.sectionId;
-
-      if (!grouped.has(location)) {
-        grouped.set(location, new Map());
-      }
-
-      const assetMap = grouped.get(location);
-      const assetKey = task.assetId || task.taskId;
-
-      if (!assetMap.has(assetKey)) {
-        assetMap.set(assetKey, {
-          ...task,
-          findingCount: 1,
-          taskIds: [task.taskId],
-        });
-      } else {
-        const existing = assetMap.get(assetKey);
-
-        existing.findingCount += 1;
-        existing.taskIds.push(task.taskId);
-
-        if (task.risk.risk_score > existing.risk.risk_score) {
-          existing.risk = task.risk;
-        }
-      }
-    }
-
-    // Keep only locations with multiple departments.
-    const multiDepartmentGroups = [];
-
-    for (const [location, assetMap] of grouped) {
-      const locationTasks = [...assetMap.values()];
-
-      const locationDepartments = [
-        ...new Set(locationTasks.map((task) => task.department)),
-      ];
-
-      if (locationDepartments.length >= 2) {
-        multiDepartmentGroups.push({
-          location,
-          tasks: locationTasks,
-          departments: locationDepartments,
-        });
-      }
-    }
-
-    // Rank locations by highest-risk maintenance job.
-    multiDepartmentGroups.sort((a, b) => {
-      const riskA = Math.max(
-        ...a.tasks.map((task) => task.risk.risk_score || 0),
-      );
-
-      const riskB = Math.max(
-        ...b.tasks.map((task) => task.risk.risk_score || 0),
-      );
-
-      return riskB - riskA;
-    });
+    const enrichedTasks = await loadRiskEnrichedTasks();
+    const multiDepartmentGroups = groupMultiDepartmentLocations(enrichedTasks);
 
     const selectedGroups = multiDepartmentGroups.slice(0, 5);
 

@@ -229,9 +229,16 @@ function BlockCard({ block: b }: { block: DemoBlock }) {
               tone="signal"
             />
             <Meta label="Duration" value={`${fmtNum(b.durationMinutes, 0)} min`} />
-            <Meta label="Trains hit" value={fmtNum(b.affectedTrains, 0)} />
-            <Meta label="Delay" value={`${fmtNum(b.predictedDelayMinutes, 0)} min`} tone="danger" />
-            <Meta label="Cost" value={fmtInr(b.estimatedPrice)} />
+            <Meta
+              label={b.windowSource === "real_network_data" ? "Trains hit" : "Trains hit (est.)"}
+              value={fmtNum(b.affectedTrains, 0)}
+            />
+            <Meta
+              label={b.windowSource === "real_network_data" ? "Delay" : "Delay (est.)"}
+              value={`${fmtNum(b.predictedDelayMinutes, 0)} min`}
+              tone="danger"
+            />
+            <Meta label="Cost (est.)" value={fmtInr(b.estimatedPrice)} />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {b.departments.map((d) => (
@@ -242,6 +249,11 @@ function BlockCard({ block: b }: { block: DemoBlock }) {
             {b.optimizationScore !== undefined ? (
               <Tag tone="signal">Opt score {fmtNum(b.optimizationScore)}</Tag>
             ) : null}
+            <Tag tone={b.windowSource === "real_network_data" ? "clear" : "steel"}>
+              {b.windowSource === "real_network_data"
+                ? "Real conflict-free window"
+                : "Estimated window"}
+            </Tag>
           </div>
           <DataTable head={["Task", "Asset", "Department", "Type", "Risk", "Findings"]}>
             {b.tasks.map((t) => (

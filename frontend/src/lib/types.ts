@@ -385,6 +385,8 @@ export type DemoBlock = {
   windowStart?: string;
   windowEnd?: string;
   durationMinutes?: number;
+  /** "real_network_data" when the window is a genuine conflict-free gap on seeded train data; "estimated" otherwise. */
+  windowSource?: "real_network_data" | "estimated";
   tasks: DemoBlockTask[];
   departments: string[];
   averageRiskScore?: number;
