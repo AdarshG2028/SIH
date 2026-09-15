@@ -1,0 +1,16 @@
+{
+  "name": "railway-ai",
+  "private": true,
+  "description": "Root launcher for the three services — see README.md for setup.",
+  "scripts": {
+    "install:all": "cd backend/Backend && npm install && cd ../../frontend && bun install",
+    "seed:network": "cd backend/Backend && npm run seed:network",
+    "dev:ml": "node scripts/run-ml.js",
+    "dev:backend": "cd backend/Backend && npm run dev",
+    "dev:frontend": "cd frontend && bun run dev",
+    "dev": "concurrently -n ML,BACKEND,FRONTEND -c yellow,cyan,green \"npm run dev:ml\" \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

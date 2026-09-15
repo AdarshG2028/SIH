@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { usePersona } from "@/lib/persona";
 import { tasksQuery, type TaskFilters } from "@/lib/queries";
 import { useGenerateTasks, usePriorityScore } from "@/lib/actions";
 import { TASK_DEPARTMENTS, TASK_TYPES, type Task } from "@/lib/types";
@@ -67,10 +68,21 @@ function toPriorityInput(t: Task) {
 }
 
 function Tasks() {
+  const { persona } = usePersona();
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [filters, setFilters] = useState<Draft>(EMPTY);
   const [page, setPage] = useState(1);
   const [scoring, setScoring] = useState<Task | null>(null);
+
+  // An Engineer persona opens straight to their own department's queue —
+  // Station Master/DRM leave the filter alone (division-wide by default).
+  useEffect(() => {
+    if (persona.id === "engineer" && persona.department) {
+      setDraft((d) => ({ ...d, department: persona.department! }));
+      setFilters((f) => ({ ...f, department: persona.department! }));
+    }
+  }, [persona.id, persona.department]);
+
   const { data, isLoading, error, isFetching } = useQuery(
     tasksQuery({ ...filters, page, limit: 50 }),
   );

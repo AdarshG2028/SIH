@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { backendHealthQuery, healthQuery } from "@/lib/queries";
 import { API_BASE_URL } from "@/lib/api";
 import { Lamp } from "@/components/control";
+import { PERSONAS, usePersona } from "@/lib/persona";
 
 const NAV = [
   { to: "/dashboard", label: "/ CONTROL" },
@@ -21,6 +22,29 @@ const NAV = [
   { to: "/data", label: "/ DATA" },
   { to: "/about", label: "/ ABOUT" },
 ] as const;
+
+/**
+ * Demo persona switcher (plan item C) — see lib/persona.ts. No page is
+ * gated by this; it's a narrative aid, not auth.
+ */
+function PersonaPicker() {
+  const { persona, setPersona } = usePersona();
+
+  return (
+    <select
+      value={persona.id}
+      onChange={(e) => setPersona(e.target.value as (typeof PERSONAS)[number]["id"])}
+      className="rounded border border-line bg-ink3 px-2 py-1.5 font-mono text-[10px] text-cream"
+      title="Demo persona — changes what pages show by default, not a real login"
+    >
+      {PERSONAS.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.label}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function useEngineHealth() {
   return useQuery(healthQuery);
@@ -107,6 +131,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="flex shrink-0 items-center gap-4 font-mono text-[11px]">
+            <PersonaPicker />
             <StatusLamp
               label="API"
               isError={backend.isError}

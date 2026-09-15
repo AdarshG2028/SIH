@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePersona } from "@/lib/persona";
 import {
   backendHealthQuery,
   blockRequestsQuery,
@@ -40,8 +41,17 @@ function count(q: { isLoading: boolean; isError: boolean; data?: number | undefi
 
 /** #1: a station filter on the existing dashboard, not a separate page — searches real stations from Asset data. */
 function StationLens() {
+  const { persona } = usePersona();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<{ code: string; name: string } | null>(null);
+
+  // A Station Master persona opens straight to their own station instead of
+  // an empty search box — the other personas (Engineer/DRM) leave this alone.
+  useEffect(() => {
+    if (persona.id === "station_master" && persona.stationCode) {
+      setSelected({ code: persona.stationCode, name: persona.stationName ?? persona.stationCode });
+    }
+  }, [persona.id, persona.stationCode, persona.stationName]);
 
   const search = useQuery(stationSearchQuery(query));
   const summary = useQuery(stationSummaryQuery(selected?.code ?? ""));
