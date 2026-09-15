@@ -17,17 +17,58 @@ Endpoints:
 import sys
 import json
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+ML_DIR = Path(__file__).resolve().parent
+PLANNING_DIR = ML_DIR / "planning"
+DATA_DIR = ML_DIR / "data"
+OPERATIONAL_FILE = DATA_DIR / "operational_constraints.json"
 
-from ML.src.planning.priority_scoring_model import calculate_maintenance_priority
-from ML.src.planning.what_if_simulator import simulate_what_if_block
-from ML.src.planning.evaluation_metrics import compute_prototype_kpis
-from ML.src.planning.block_planner import generate_sih_optimized_plan, evaluate_user_request
+if str(PLANNING_DIR) not in sys.path:
+    sys.path.insert(0, str(PLANNING_DIR))
+
+from priority_scoring_model import calculate_maintenance_priority
+from what_if_simulator import simulate_what_if_block
+from evaluation_metrics import compute_prototype_kpis
+from block_planner import generate_sih_optimized_plan, evaluate_user_request
+from data_loader import get_all_department_tasks
+
+
+# ============================================================
+# USER-REQUEST INPUTS
+# ============================================================
+
+def load_operational_data():
+    if OPERATIONAL_FILE.exists():
+        with open(OPERATIONAL_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"sections": {}}
+
+
+def to_colocation_task(task):
+    """
+    Maps a TMS / SMMS / TDMS task (snake_case) into the camelCase shape
+    read by block_planner.find_co_located_tasks and the user-request response.
+    """
+    resources = task.get("required_resources") or {}
+    return {
+        "taskId": task.get("task_id"),
+        "department": task.get("department", ""),
+        "sectionId": task.get("corridor"),
+        "fromKm": task.get("from_km"),
+        "toKm": task.get("to_km"),
+        "durationHours": task.get("estimated_duration", 2.0),
+        "workersRequired": resources.get("workers", 0),
+        "equipmentRequired": resources.get("equipment", []),
+        "taskType": task.get("task_type"),
+        "description": task.get("safety_impact") or task.get("task_type"),
+        "status": task.get("status", "pending"),
+    }
+
+
+def load_colocation_tasks():
+    return {"tasks": [to_colocation_task(t) for t in get_all_department_tasks()]}
 
 
 class RailwayAIRequestHandler(BaseHTTPRequestHandler):
@@ -72,11 +113,13 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
 
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
-        
+
         try:
             body = json.loads(post_data) if post_data else {}
-        except Exception:
-            body = {}
+        except Exception as e:
+            self._set_headers(400)
+            self.wfile.write(json.dumps({"error": "Invalid JSON body", "details": str(e)}).encode("utf-8"))
+            return
 
         try:
             # 1. Generate Plan
@@ -115,7 +158,11 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
 
             # 4. Interactive User Request (Form submission)
             elif path == "/api/ai/user-request":
-                user_res = evaluate_user_request(body)
+                user_res = evaluate_user_request(
+                    body,
+                    operational_data=load_operational_data(),
+                    task_data=load_colocation_tasks()
+                )
                 self._set_headers(200)
                 self.wfile.write(json.dumps(user_res, indent=2).encode("utf-8"))
                 return
@@ -131,7 +178,7 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
 
 def run_server(port: int = 8000):
     server_address = ("", port)
-    httpd = HTTPServer(server_address, RailwayAIRequestHandler)
+    httpd = ThreadingHTTPServer(server_address, RailwayAIRequestHandler)
     print("=" * 75)
     print(f"  INDIAN RAILWAYS AI BLOCK PLANNING API SERVER RUNNING ON PORT {port}")
     print("=" * 75)

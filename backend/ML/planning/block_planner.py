@@ -25,7 +25,7 @@ OPERATIONAL_FILE = (
     BASE_DIR / "data" / "processed" / "operational_constraints.json"
 )
 
-OUTPUT_DIR = BASE_DIR / "data" / "processed"
+OUTPUT_DIR = Path(__file__).resolve().parents[1] / "outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 OUTPUT_FILE = OUTPUT_DIR / "block_plan.json"

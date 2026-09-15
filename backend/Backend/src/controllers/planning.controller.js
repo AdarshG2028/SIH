@@ -1,6 +1,11 @@
 const Task = require("../models/Task");
 const AssetRiskScore = require("../models/AssetRiskScore");
 
+// Block building is in-memory: every pending task is grouped and joined against
+// its risk score. On a full division (100k+ tasks) that takes minutes, so the
+// planner works from the highest-criticality slice instead of the whole bank.
+const PLANNING_TASK_LIMIT = Number(process.env.PLANNING_TASK_LIMIT) || 6000;
+
 const getDemoPlan = async (req, res, next) => {
   try {
     const departments = ["Track", "OHE", "Signalling"];
@@ -10,6 +15,7 @@ const getDemoPlan = async (req, res, next) => {
       department: { $in: departments },
     })
       .sort({ criticalityScore: -1 })
+      .limit(PLANNING_TASK_LIMIT)
       .lean();
 
     const assetIds = [
@@ -258,6 +264,7 @@ const getPeriodPlan = async (req, res, next) => {
       department: { $in: departments },
     })
       .sort({ criticalityScore: -1 })
+      .limit(PLANNING_TASK_LIMIT)
       .lean();
 
     const assetIds = [

@@ -14,13 +14,19 @@ const mlImportRoutes = require("./routes/mlImport.routes");
 const riskRoutes = require("./routes/risk.routes");
 const planningRoutes = require("./routes/planning.routes");
 const approvalRoutes = require("./routes/approval.routes");
+const blockRequestRoutes = require("./routes/blockRequest.routes");
 
 const app = express();
 
 connectDB();
 
-app.use(helmet());
-app.use(cors());
+// Prototype: no auth. CORS_ORIGIN (comma-separated) limits origins; unset allows any.
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+  : "*";
+
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -38,6 +44,7 @@ app.use("/api/ml", mlImportRoutes);
 app.use("/api/risks", riskRoutes);
 app.use("/api/planning", planningRoutes);
 app.use("/api/approvals", approvalRoutes);
+app.use("/api/ai", blockRequestRoutes);
 
 const PORT = process.env.PORT || 5000;
 

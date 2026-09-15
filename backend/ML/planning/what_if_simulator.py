@@ -17,7 +17,10 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from ML.src.planning.data_loader import get_goods_forecast, get_corridor_info
+try:
+    from ML.src.planning.data_loader import get_goods_forecast, get_corridor_info
+except ImportError:
+    from data_loader import get_goods_forecast, get_corridor_info
 
 
 def time_to_minutes(val: str) -> int:

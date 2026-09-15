@@ -16,7 +16,7 @@ from typing import List, Dict, Any, Optional
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
-SIH_DATA_DIR = BASE_DIR / "data" / "sih_prototype"
+SIH_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 TMS_FILE = SIH_DATA_DIR / "tms_tasks.json"
 SMMS_FILE = SIH_DATA_DIR / "smms_tasks.json"
 TDMS_FILE = SIH_DATA_DIR / "tdms_tasks.json"
