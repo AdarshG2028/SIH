@@ -78,6 +78,13 @@ export const stationsGeoQuery = queryOptions({
   staleTime: 5 * 60_000,
 });
 
+/** Whether the AI assistant has an API key configured server-side. */
+export const assistantStatusQuery = queryOptions({
+  queryKey: ["assistant-status"],
+  queryFn: async () => (await apiGet<{ configured: boolean }>("/assistant/status")).data,
+  retry: false,
+});
+
 export function blockRequestsQuery(
   filters: { status?: string; sectionId?: string; limit?: number } = {},
 ) {

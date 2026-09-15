@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as ImpactRouteImport } from './routes/impact'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -122,6 +128,7 @@ const RisksAssetIdRoute = RisksAssetIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/assistant'
     | '/dashboard'
     | '/data'
     | '/impact'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/assistant'
     | '/dashboard'
     | '/data'
     | '/impact'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/assistant'
     | '/dashboard'
     | '/data'
     | '/impact'
@@ -246,6 +258,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AssistantRoute: typeof AssistantRoute
   DashboardRoute: typeof DashboardRoute
   DataRoute: typeof DataRoute
   ImpactRoute: typeof ImpactRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -398,6 +418,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AssistantRoute: AssistantRoute,
   DashboardRoute: DashboardRoute,
   DataRoute: DataRoute,
   ImpactRoute: ImpactRoute,

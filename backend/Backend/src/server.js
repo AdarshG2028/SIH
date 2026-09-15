@@ -17,6 +17,7 @@ const approvalRoutes = require("./routes/approval.routes");
 const blockRequestRoutes = require("./routes/blockRequest.routes");
 const impactRoutes = require("./routes/impact.routes");
 const stationRoutes = require("./routes/station.routes");
+const assistantRoutes = require("./routes/assistant.routes");
 const { warmUp: warmUpImpactEngine } = require("./services/impact.service");
 const { warmUp: warmUpStationDirectory } = require("./services/stationDirectory.service");
 
@@ -51,6 +52,7 @@ app.use("/api/approvals", approvalRoutes);
 app.use("/api/ai", blockRequestRoutes);
 app.use("/api/impact", impactRoutes);
 app.use("/api/stations", stationRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 const PORT = process.env.PORT || 5000;
 

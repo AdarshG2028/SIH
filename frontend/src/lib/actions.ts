@@ -1,13 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiPost } from "./api";
-import type { PriorityResult, TaskGenerationStats } from "./types";
+import type {
+  AssistantChatResult,
+  AssistantMessage,
+  PriorityResult,
+  TaskGenerationStats,
+} from "./types";
 
 /** POST /ai/priority — stateless ML scoring, nothing is persisted. */
 export function usePriorityScore() {
   return useMutation({
     mutationFn: async (task: Record<string, unknown>) =>
       (await apiPost<PriorityResult>("/ai/priority", task)).data,
+  });
+}
+
+/** POST /assistant/chat — sends the full conversation each time; the backend itself is stateless. */
+export function useAssistantChat() {
+  return useMutation({
+    mutationFn: async (messages: AssistantMessage[]) =>
+      (await apiPost<AssistantChatResult>("/assistant/chat", { messages })).data,
   });
 }
 

@@ -195,6 +195,13 @@ export type StationSummary = {
   assets: Array<{ assetId: string; assetType?: string; riskLevel?: string; riskScore?: number }>;
 };
 
+/** #5 AI assistant */
+export type AssistantMessage = { role: "user" | "assistant"; content: string };
+export type AssistantChatResult = {
+  reply: string;
+  toolCalls: Array<{ name: string; args: Record<string, unknown> }>;
+};
+
 /** GET /planning/kpis — computed from this run's actual plan, not a fixed benchmark. */
 export type PlanKpis = {
   basis: string;

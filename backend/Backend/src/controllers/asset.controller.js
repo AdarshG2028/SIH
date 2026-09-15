@@ -1,11 +1,5 @@
 const Asset = require("../models/Asset");
-const Inspection = require("../models/Inspection");
-const AssetUsage = require("../models/AssetUsage");
-const FailureEvent = require("../models/FailureEvent");
-const MaintenanceHistory = require("../models/MaintenanceHistory");
-const MaintenanceSchedule = require("../models/MaintenanceSchedule");
-const AssetRiskScore = require("../models/AssetRiskScore");
-const AssetExplanation = require("../models/AssetExplanation");
+const { fetchAssetDetails } = require("../services/assetInfo.service");
 
 const getAssets = async (req, res, next) => {
   try {
@@ -79,80 +73,18 @@ const getAssetById = async (req, res, next) => {
 
 const getAssetDetails = async (req, res, next) => {
   try {
-    const { assetId } = req.params;
+    const details = await fetchAssetDetails(req.params.assetId);
 
-    const asset = await Asset.findOne({
-      asset_id: assetId,
-    }).lean();
-
-    if (!asset) {
+    if (!details) {
       return res.status(404).json({
         success: false,
         message: "Asset not found",
       });
     }
 
-    const [
-      inspections,
-      usage,
-      failures,
-      maintenance,
-      schedule,
-      riskHistory,
-      explanation,
-    ] = await Promise.all([
-      Inspection.find({ asset_id: assetId })
-        .sort({ inspection_date: -1 })
-        .lean(),
-
-      AssetUsage.find({ asset_id: assetId }).sort({ usage_month: -1 }).lean(),
-
-      FailureEvent.find({ asset_id: assetId })
-        .sort({ failure_date: -1 })
-        .lean(),
-
-      MaintenanceHistory.find({ asset_id: assetId })
-        .sort({ maintenance_date: -1 })
-        .lean(),
-
-      MaintenanceSchedule.findOne({ asset_id: assetId }).lean(),
-
-      // Every snapshot, not just the latest, so the frontend can show a
-      // real trend over time instead of a single point-in-time score.
-      AssetRiskScore.find({ asset_id: assetId })
-        .sort({ snapshot_date: -1 })
-        .lean(),
-
-      AssetExplanation.findOne({ asset_id: assetId })
-        .sort({ snapshot_date: -1 })
-        .lean(),
-    ]);
-
-    // Same failure_type recurring more than once — a real signal from data
-    // already being fetched, not a new query.
-    const failureTypeCounts = new Map();
-    for (const f of failures) {
-      if (!f.failure_type) continue;
-      failureTypeCounts.set(f.failure_type, (failureTypeCounts.get(f.failure_type) || 0) + 1);
-    }
-    const recurringFailureTypes = [...failureTypeCounts.entries()]
-      .filter(([, count]) => count >= 2)
-      .map(([type, count]) => ({ type, count }));
-
     res.json({
       success: true,
-      data: {
-        asset,
-        inspections,
-        usage,
-        failures,
-        maintenance,
-        schedule,
-        risk: riskHistory[0] || null, // latest — unchanged shape for existing consumers
-        riskHistory,
-        recurringFailureTypes,
-        explanation,
-      },
+      data: details,
     });
   } catch (error) {
     next(error);
