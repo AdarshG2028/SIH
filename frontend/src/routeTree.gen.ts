@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as PriorityRouteImport } from './routes/priority'
@@ -50,6 +51,11 @@ const DataRoute = DataRouteImport.update({
 const ImpactRoute = ImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
+  '/map': typeof MapRoute
   '/plan': typeof PlanRoute
   '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
+  '/map': typeof MapRoute
   '/plan': typeof PlanRoute
   '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
+  '/map': typeof MapRoute
   '/plan': typeof PlanRoute
   '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/data'
     | '/impact'
+    | '/map'
     | '/plan'
     | '/planning'
     | '/priority'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/data'
     | '/impact'
+    | '/map'
     | '/plan'
     | '/planning'
     | '/priority'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/data'
     | '/impact'
+    | '/map'
     | '/plan'
     | '/planning'
     | '/priority'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DataRoute: typeof DataRoute
   ImpactRoute: typeof ImpactRoute
+  MapRoute: typeof MapRoute
   PlanRoute: typeof PlanRoute
   PlanningRoute: typeof PlanningRoute
   PriorityRoute: typeof PriorityRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/impact'
       fullPath: '/impact'
       preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DataRoute: DataRoute,
   ImpactRoute: ImpactRoute,
+  MapRoute: MapRoute,
   PlanRoute: PlanRoute,
   PlanningRoute: PlanningRoute,
   PriorityRoute: PriorityRoute,

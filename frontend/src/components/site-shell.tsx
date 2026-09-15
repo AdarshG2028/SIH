@@ -15,6 +15,7 @@ const NAV = [
   { to: "/tasks", label: "/ TASKS" },
   { to: "/assets", label: "/ ASSETS" },
   { to: "/risks", label: "/ RISKS" },
+  { to: "/map", label: "/ MAP" },
   { to: "/impact", label: "/ IMPACT" },
   { to: "/data", label: "/ DATA" },
   { to: "/about", label: "/ ABOUT" },
