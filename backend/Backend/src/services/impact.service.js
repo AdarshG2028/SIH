@@ -273,4 +273,21 @@ async function warmUp() {
   await getIndex();
 }
 
-module.exports = { simulateBlockImpact, listFreeWindows, warmUp };
+/**
+ * Whether this section has any real seeded train data at all — distinct
+ * from `hasConflict` (which can legitimately be false for a genuinely
+ * quiet section). Callers that also support a synthetic/demo fallback
+ * (e.g. corridors from the ML engine's small sample, some of which use
+ * station codes outside the public dataset's ~2016 snapshot — see
+ * docs/NETWORK_DATA.md) use this to decide whether real data is available
+ * before trusting a result.
+ */
+async function hasSectionData(sectionId) {
+  const parsed = parseSectionId(sectionId);
+  if (!parsed.isSection) return false;
+
+  const index = await getIndex();
+  return index.has(canonicalKey(parsed.from, parsed.to));
+}
+
+module.exports = { simulateBlockImpact, listFreeWindows, warmUp, hasSectionData };

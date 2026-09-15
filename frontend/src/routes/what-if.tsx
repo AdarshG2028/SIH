@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { apiPost } from "@/lib/api";
-import { CORRIDORS, DEPARTMENTS, type WhatIfResult } from "@/lib/types";
+import { DEPARTMENTS, WHAT_IF_SECTIONS, isRealDataSection, type WhatIfResult } from "@/lib/types";
 import {
   ChromeButton,
   DataTable,
@@ -37,7 +37,7 @@ type WhatIfForm = {
 };
 
 const INITIAL: WhatIfForm = {
-  corridor: "LNL-PUNE",
+  corridor: "BPL-HBJ",
   proposed_date: "2026-09-16",
   proposed_start_time: "10:30",
   proposed_end_time: "12:00",
@@ -81,9 +81,10 @@ function WhatIf() {
           <form onSubmit={onSubmit} className="space-y-4">
             <Field label="Corridor">
               <SelectInput value={form.corridor} onChange={(e) => set("corridor", e.target.value)}>
-                {CORRIDORS.map((c) => (
+                {WHAT_IF_SECTIONS.map((c) => (
                   <option key={c} value={c}>
                     {c}
+                    {isRealDataSection(c) ? " (real train data)" : " (ML sample)"}
                   </option>
                 ))}
               </SelectInput>
@@ -151,7 +152,7 @@ function WhatIf() {
           {!result && !run.isPending && !run.error ? (
             <EmptyState
               title="No simulation yet"
-              hint="Try 10:30–12:00 on LNL-PUNE to see daytime conflicts, then 01:00–04:00."
+              hint="Try 10:30–12:00 on BPL-HBJ (real train data) to see daytime conflicts, then 01:00–04:00."
             />
           ) : null}
 

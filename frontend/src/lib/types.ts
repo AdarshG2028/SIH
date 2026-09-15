@@ -23,6 +23,27 @@ export const SECTIONS = ["LNL-PUNE", "BPL", "RKMP"] as const;
 /** Corridor ids used by the TMS / SMMS / TDMS task data — what-if and plan generation filter on these. */
 export const CORRIDORS = ["LNL-PUNE", "BPL-RKMP"] as const;
 
+/**
+ * What-if section options: the ML engine's 2 sample corridors (above) plus
+ * a couple of sections with real train data seeded from the public network
+ * dataset (backend/docs/NETWORK_DATA.md). Picking one of the real ones runs
+ * the simulation against actual trains on that section instead of the ML
+ * engine's small hard-coded timetable — the backend picks which engine to
+ * use per corridor (src/controllers/aiEngine.controller.js#whatIf).
+ *
+ * A separate list from CORRIDORS because plan generation (plan.tsx) isn't
+ * wired to these real sections yet — only what-if is.
+ */
+export const WHAT_IF_SECTIONS = [
+  ...CORRIDORS,
+  "BPL-HBJ", // Bhopal Jn <-> Habibganj (Rani Kamlapati's pre-2021 name) — real data
+  "CSB-NDLS", // Shivaji Bridge <-> New Delhi — real data
+] as const;
+
+/** Whether a what-if section id runs on real seeded train data rather than the ML sample. */
+export const isRealDataSection = (sectionId: string) =>
+  !(CORRIDORS as readonly string[]).includes(sectionId);
+
 export const RISK_LEVELS = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 
 export const BLOCK_REQUEST_STATUSES = [
