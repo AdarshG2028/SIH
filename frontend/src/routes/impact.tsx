@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { kpisQuery } from "@/lib/queries";
-import { AsyncBlock, Disclaimer, Meta, PageHeader, Panel } from "@/components/control";
+import { kpisQuery, planKpisQuery } from "@/lib/queries";
+import { AsyncBlock, Disclaimer, Meta, PageHeader, Panel, Tag } from "@/components/control";
 import { BeforeAfterTable } from "@/components/before-after";
 import { cn } from "@/lib/utils";
+import { fmtNum } from "@/lib/format";
 
 export const Route = createFileRoute("/impact")({
   head: () => ({
@@ -101,6 +102,46 @@ function Comparison({
   );
 }
 
+function RealPlanKpis() {
+  const { data, isLoading, error } = useQuery(planKpisQuery);
+
+  return (
+    <Panel
+      title="This run's real numbers"
+      right={<Tag tone="clear">Computed from the actual plan</Tag>}
+    >
+      <AsyncBlock isLoading={isLoading} error={error} data={data} loadingLabel="Computing…">
+        {(k) => (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Meta
+                label="Blocks"
+                value={`${fmtNum(k.blocksBefore, 0)} → ${fmtNum(k.blocksAfter, 0)}`}
+                tone="signal"
+              />
+              <Meta
+                label="Block hours"
+                value={`${fmtNum(k.hoursBefore, 1)} → ${fmtNum(k.hoursAfter, 1)}`}
+                tone="clear"
+              />
+              <Meta label="Hours saved" value={`${fmtNum(k.hoursSaved, 1)} h`} tone="clear" />
+              <Meta
+                label="Departments consolidated"
+                value={fmtNum(k.departmentsConsolidated, 0)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Tag tone="clear">{k.realWindowBlocks} block(s) on real conflict-free windows</Tag>
+              <Tag tone="steel">{k.estimatedWindowBlocks} block(s) on estimated windows</Tag>
+            </div>
+            <Disclaimer text={k.assumption} />
+          </div>
+        )}
+      </AsyncBlock>
+    </Panel>
+  );
+}
+
 function Impact() {
   const { data, isLoading, error } = useQuery(kpisQuery);
 
@@ -111,6 +152,7 @@ function Impact() {
         title="Before vs after AI planning"
         intro="Decentralized planning has each department request its own possession. The AI planner merges them into shared shadow blocks outside timetable peaks."
       />
+      <RealPlanKpis />
       <AsyncBlock
         isLoading={isLoading}
         error={error}

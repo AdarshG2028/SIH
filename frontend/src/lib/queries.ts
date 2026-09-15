@@ -7,6 +7,7 @@ import type {
   BlockRequest,
   DemoBlock,
   Kpis,
+  PlanKpis,
   OptimizedDemoPlan,
   PeriodPlan,
   RiskExplanation,
@@ -36,6 +37,13 @@ export const healthQuery = queryOptions({
 export const kpisQuery = queryOptions({
   queryKey: ["kpis"],
   queryFn: async () => (await apiGet<Kpis>("/ai/kpis")).data,
+  retry: false,
+});
+
+/** Real numbers from this run's actual plan — see PlanKpis. */
+export const planKpisQuery = queryOptions({
+  queryKey: ["plan-kpis"],
+  queryFn: async () => (await apiGet<PlanKpis>("/planning/kpis")).data,
   retry: false,
 });
 

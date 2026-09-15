@@ -169,6 +169,21 @@ export type Kpis = {
   kpis?: Record<string, number>;
 };
 
+/** GET /planning/kpis — computed from this run's actual plan, not a fixed benchmark. */
+export type PlanKpis = {
+  basis: string;
+  blocksBefore: number;
+  blocksAfter: number;
+  blocksSaved: number;
+  hoursBefore: number;
+  hoursAfter: number;
+  hoursSaved: number;
+  departmentsConsolidated: number;
+  realWindowBlocks: number;
+  estimatedWindowBlocks: number;
+  assumption: string;
+};
+
 export type WhatIfResult = {
   simulation_query?: Record<string, unknown>;
   has_conflict?: boolean;
