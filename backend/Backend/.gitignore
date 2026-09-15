@@ -38,3 +38,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Cached downloads for scripts/seedNetwork.js (~98 MB, fetched on demand)
+.cache/

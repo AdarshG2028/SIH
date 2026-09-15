@@ -20,6 +20,19 @@ const stationSchema = new mongoose.Schema(
     lon: {
       type: Number,
     },
+
+    zone: {
+      type: String,
+    },
+
+    state: {
+      type: String,
+    },
+
+    source: {
+      type: String,
+      default: "asset_data",
+    },
   },
   {
     timestamps: true,
