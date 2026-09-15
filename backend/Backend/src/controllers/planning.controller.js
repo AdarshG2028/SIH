@@ -243,7 +243,18 @@ const getPeriodPlan = async (req, res, next) => {
 
       monthlyJobs.push(...departmentJobs);
 
-      weeklyJobs.push(...departmentJobs);
+      // One resolved window per location, shared by every department's job
+      // there — same model as getDemoPlan's blocks. Real when the location
+      // is a section with seeded train data, an honestly-labeled estimate
+      // otherwise (see resolveBlockWindow / #8 planning notes above).
+      const window = await resolveBlockWindow(group.location);
+      const slotLabel =
+        `${window.serviceDay} ${window.windowStart}–${window.windowEnd}` +
+        (window.windowSource === "estimated" ? " (est.)" : "");
+
+      for (const job of departmentJobs) {
+        weeklyJobs.push({ ...job, executionSlot: slotLabel });
+      }
     }
 
     const monthlyDepartments = [
@@ -289,9 +300,7 @@ const getPeriodPlan = async (req, res, next) => {
 
       departments: weeklyDepartments,
 
-      jobs: weeklyJobs.map((task, index) =>
-        formatJob(task, `Block-${Math.floor(index / 3) + 1}`),
-      ),
+      jobs: weeklyJobs.map((task) => formatJob(task, task.executionSlot)),
     };
 
     res.json({
