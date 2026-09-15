@@ -16,6 +16,7 @@ import {
 } from "@/components/control";
 import { ShapFactors } from "@/components/shap";
 import { daysOverdue, fmtDate, fmtInr, fmtNum, fmtProb } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/assets/$assetId")({
   head: ({ params }) => ({ meta: [{ title: `${params.assetId} — Asset Details` }] }),
@@ -39,6 +40,55 @@ function AssetDetail() {
       >
         {(d) => <AssetView details={d} />}
       </AsyncBlock>
+    </div>
+  );
+}
+
+/**
+ * Condition score really does vary across an asset's inspection history
+ * (real data: ~9 inspections/asset over ~2 years, genuinely fluctuating) —
+ * unlike AssetRiskScore (exactly one snapshot per asset, system-wide, so
+ * no real trend exists there) or FailureEvent (no asset ever has the same
+ * failure_type twice in this dataset). This is real, so it gets a chart;
+ * those don't.
+ */
+function ConditionTrend({ inspections }: { inspections: AssetDetails["inspections"] }) {
+  const points = [...inspections]
+    .filter((i) => typeof i.condition_score === "number" && i.inspection_date)
+    .sort(
+      (a, b) => new Date(a.inspection_date ?? 0).getTime() - new Date(b.inspection_date ?? 0).getTime(),
+    );
+
+  if (points.length < 2) return null;
+
+  const scores = points.map((p) => p.condition_score as number);
+  const min = Math.min(...scores);
+  const max = Math.max(...scores);
+  const range = max - min || 1;
+  const w = 180;
+  const h = 36;
+  const pad = 3;
+  const stepX = (w - pad * 2) / (scores.length - 1);
+  const coords = scores
+    .map((s, i) => `${pad + i * stepX},${h - pad - ((s - min) / range) * (h - pad * 2)}`)
+    .join(" ");
+
+  // Safe: the `points.length < 2` check above guarantees both indices exist.
+  const first = scores[0]!;
+  const last = scores[scores.length - 1]!;
+  const delta = last - first;
+  const direction = delta > 2 ? "improving" : delta < -2 ? "declining" : "stable";
+  const tone = direction === "declining" ? "text-danger" : direction === "improving" ? "text-clear" : "text-steel";
+
+  return (
+    <div className="flex items-center gap-3">
+      <svg width={w} height={h} className={cn("shrink-0", tone)}>
+        <polyline points={coords} fill="none" strokeWidth={1.5} className="stroke-current" />
+      </svg>
+      <span className={cn("font-mono text-[10px]", tone)}>
+        Condition {fmtNum(first, 0)} → {fmtNum(last, 0)} over {points.length} inspections (
+        {direction})
+      </span>
     </div>
   );
 }
@@ -147,6 +197,11 @@ function AssetView({ details: d }: { details: AssetDetails }) {
       </div>
 
       <Panel title="Inspections" right={`${d.inspections.length}`}>
+        {d.inspections.length ? (
+          <div className="mb-4">
+            <ConditionTrend inspections={d.inspections} />
+          </div>
+        ) : null}
         {d.inspections.length ? (
           <DataTable
             head={["Inspection", "Date", "Condition", "Wear", "Defects", "Inspector", "Status"]}

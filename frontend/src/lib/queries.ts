@@ -12,6 +12,8 @@ import type {
   PeriodPlan,
   RiskExplanation,
   RiskRow,
+  StationSearchResult,
+  StationSummary,
   Task,
 } from "./types";
 
@@ -45,6 +47,35 @@ export const planKpisQuery = queryOptions({
   queryKey: ["plan-kpis"],
   queryFn: async () => (await apiGet<PlanKpis>("/planning/kpis")).data,
   retry: false,
+});
+
+export function stationSearchQuery(search: string) {
+  return queryOptions({
+    queryKey: ["station-search", search],
+    queryFn: async () => {
+      const res = await apiGet<StationSearchResult[]>(`/stations${qs({ search, limit: 8 })}`);
+      return res.data ?? [];
+    },
+    enabled: search.length > 0,
+    retry: false,
+  });
+}
+
+export function stationSummaryQuery(code: string) {
+  return queryOptions({
+    queryKey: ["station-summary", code],
+    queryFn: async () => (await apiGet<StationSummary>(`/stations/${encodeURIComponent(code)}/summary`)).data,
+    enabled: Boolean(code),
+    retry: false,
+  });
+}
+
+/** Every station with real geo coordinates — what the block map plots. */
+export const stationsGeoQuery = queryOptions({
+  queryKey: ["stations-geo"],
+  queryFn: async () => (await apiGet<StationSearchResult[]>("/stations/geo")).data ?? [],
+  retry: false,
+  staleTime: 5 * 60_000,
 });
 
 export function blockRequestsQuery(

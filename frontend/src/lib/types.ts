@@ -169,6 +169,32 @@ export type Kpis = {
   kpis?: Record<string, number>;
 };
 
+/** GET /stations — a real station your Asset/Task data references. */
+export type StationSearchResult = {
+  code: string;
+  name: string;
+  assetCount: number;
+  assetTypes: string[];
+  lat?: number;
+  lon?: number;
+  hasGeo: boolean;
+};
+
+/** GET /stations/:code/summary */
+export type StationSummary = {
+  code: string;
+  name: string;
+  lat?: number;
+  lon?: number;
+  assetCount: number;
+  assetTypes: string[];
+  riskLevelCounts: { LOW: number; MEDIUM: number; HIGH: number; CRITICAL: number };
+  pendingTaskCount: number;
+  tasksByDepartment: Record<string, number>;
+  overdueMaintenanceCount: number;
+  assets: Array<{ assetId: string; assetType?: string; riskLevel?: string; riskScore?: number }>;
+};
+
 /** GET /planning/kpis — computed from this run's actual plan, not a fixed benchmark. */
 export type PlanKpis = {
   basis: string;

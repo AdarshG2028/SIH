@@ -16,7 +16,9 @@ const planningRoutes = require("./routes/planning.routes");
 const approvalRoutes = require("./routes/approval.routes");
 const blockRequestRoutes = require("./routes/blockRequest.routes");
 const impactRoutes = require("./routes/impact.routes");
+const stationRoutes = require("./routes/station.routes");
 const { warmUp: warmUpImpactEngine } = require("./services/impact.service");
+const { warmUp: warmUpStationDirectory } = require("./services/stationDirectory.service");
 
 const app = express();
 
@@ -48,6 +50,7 @@ app.use("/api/planning", planningRoutes);
 app.use("/api/approvals", approvalRoutes);
 app.use("/api/ai", blockRequestRoutes);
 app.use("/api/impact", impactRoutes);
+app.use("/api/stations", stationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
@@ -59,6 +62,10 @@ app.use(errorHandler);
 warmUpImpactEngine()
   .then(() => console.log("Impact engine warmed up"))
   .catch((error) => console.error("Impact engine warmup failed:", error.message));
+
+warmUpStationDirectory()
+  .then(() => console.log("Station directory warmed up"))
+  .catch((error) => console.error("Station directory warmup failed:", error.message));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

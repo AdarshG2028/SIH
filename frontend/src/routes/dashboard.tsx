@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   backendHealthQuery,
   blockRequestsQuery,
@@ -7,6 +8,8 @@ import {
   healthQuery,
   kpisQuery,
   riskCountQuery,
+  stationSearchQuery,
+  stationSummaryQuery,
   taskCountQuery,
 } from "@/lib/queries";
 import {
@@ -20,6 +23,7 @@ import {
   Stat,
   StatusTag,
   Tag,
+  TextInput,
 } from "@/components/control";
 import { fmtDateTime, fmtNum, windowLabel } from "@/lib/format";
 
@@ -32,6 +36,118 @@ function count(q: { isLoading: boolean; isError: boolean; data?: number | undefi
   if (q.isLoading) return "…";
   if (q.isError) return "—";
   return fmtNum(q.data, 0);
+}
+
+/** #1: a station filter on the existing dashboard, not a separate page — searches real stations from Asset data. */
+function StationLens() {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<{ code: string; name: string } | null>(null);
+
+  const search = useQuery(stationSearchQuery(query));
+  const summary = useQuery(stationSummaryQuery(selected?.code ?? ""));
+
+  const showDropdown = query.length > 0 && !selected;
+
+  return (
+    <Panel title="Station lens">
+      <div className="relative max-w-sm">
+        <TextInput
+          placeholder="Search a station (code or name)…"
+          value={selected ? `${selected.name} (${selected.code})` : query}
+          onChange={(e) => {
+            setSelected(null);
+            setQuery(e.target.value);
+          }}
+        />
+        {showDropdown ? (
+          <div className="absolute z-10 mt-1 w-full rounded-md border border-line bg-ink2 shadow-lg">
+            {search.isLoading ? (
+              <div className="px-3 py-2 font-mono text-[11px] text-steel">Searching…</div>
+            ) : search.data?.length ? (
+              search.data.map((s) => (
+                <button
+                  key={s.code}
+                  type="button"
+                  className="block w-full px-3 py-2 text-left font-mono text-[11px] text-cream hover:bg-ink3"
+                  onClick={() => {
+                    setSelected({ code: s.code, name: s.name });
+                    setQuery("");
+                  }}
+                >
+                  {s.name} <span className="text-steel">({s.code})</span>
+                  <span className="ml-2 text-steel">{s.assetCount} assets</span>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-2 font-mono text-[11px] text-steel">No station matches.</div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {selected ? (
+        <div className="mt-4">
+          <AsyncBlock
+            isLoading={summary.isLoading}
+            error={summary.error}
+            data={summary.data}
+            loadingLabel="Loading station snapshot…"
+          >
+            {(s) => (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                  <Stat label="Assets" value={fmtNum(s.assetCount, 0)} />
+                  <Stat
+                    label="Critical"
+                    value={fmtNum(s.riskLevelCounts.CRITICAL, 0)}
+                    tone="danger"
+                  />
+                  <Stat label="High risk" value={fmtNum(s.riskLevelCounts.HIGH, 0)} tone="signal" />
+                  <Stat label="Pending tasks" value={fmtNum(s.pendingTaskCount, 0)} />
+                  <Stat
+                    label="Overdue maintenance"
+                    value={fmtNum(s.overdueMaintenanceCount, 0)}
+                    tone={s.overdueMaintenanceCount > 0 ? "danger" : "clear"}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {s.assetTypes.map((t) => (
+                    <Tag key={t} tone="steel">
+                      {t}
+                    </Tag>
+                  ))}
+                  {Object.entries(s.tasksByDepartment).map(([dept, n]) => (
+                    <Tag key={dept} tone="signal">
+                      {dept}: {n} pending
+                    </Tag>
+                  ))}
+                </div>
+                <DataTable head={["Asset", "Type", "Risk"]}>
+                  {s.assets.map((a) => (
+                    <tr key={a.assetId}>
+                      <td className="text-signal">
+                        <Link to="/assets/$assetId" params={{ assetId: a.assetId }} className="hover:underline">
+                          {a.assetId}
+                        </Link>
+                      </td>
+                      <td className="text-steel">{a.assetType ?? "—"}</td>
+                      <td>
+                        <RiskTag level={a.riskLevel} />
+                      </td>
+                    </tr>
+                  ))}
+                </DataTable>
+              </div>
+            )}
+          </AsyncBlock>
+        </div>
+      ) : (
+        <p className="mt-3 font-mono text-[11px] text-steel">
+          Search a station to see its real assets, risk levels and pending work.
+        </p>
+      )}
+    </Panel>
+  );
 }
 
 function Dashboard() {
@@ -61,6 +177,8 @@ function Dashboard() {
           </Link>
         }
       />
+
+      <StationLens />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Link to="/tasks">
