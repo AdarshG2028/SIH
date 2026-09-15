@@ -15,6 +15,8 @@ const riskRoutes = require("./routes/risk.routes");
 const planningRoutes = require("./routes/planning.routes");
 const approvalRoutes = require("./routes/approval.routes");
 const blockRequestRoutes = require("./routes/blockRequest.routes");
+const impactRoutes = require("./routes/impact.routes");
+const { warmUp: warmUpImpactEngine } = require("./services/impact.service");
 
 const app = express();
 
@@ -45,10 +47,19 @@ app.use("/api/risks", riskRoutes);
 app.use("/api/planning", planningRoutes);
 app.use("/api/approvals", approvalRoutes);
 app.use("/api/ai", blockRequestRoutes);
+app.use("/api/impact", impactRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 app.use(errorHandler);
+
+// The impact engine's index is a ~2s / ~270 MB one-time build (see
+// impact.service.js) — worth paying at boot rather than blocking whoever's
+// unlucky enough to send the first /api/impact request.
+warmUpImpactEngine()
+  .then(() => console.log("Impact engine warmed up"))
+  .catch((error) => console.error("Impact engine warmup failed:", error.message));
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
