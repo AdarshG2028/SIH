@@ -148,9 +148,12 @@ def _free_segments(corridor: str, date: str) -> List[Dict[str, Any]]:
     start, end, span_hours = _quiet_window(corridor)
     start_min, end_min = to_minutes(start), to_minutes(end)
 
+    # The nominal quiet window is a guideline, not a fence. On a real timetable
+    # the genuinely quietest slot often sits a couple of hours before it opens,
+    # so the search has to be allowed to look there.
     spans = [
         {"from": start_min, "to": end_min, "source": "Core quiet window"},
-        {"from": start_min - 60, "to": end_min, "source": "Quiet window opened an hour early"},
+        {"from": start_min - 150, "to": end_min, "source": "Quiet window opened early"},
         {"from": start_min, "to": end_min + 90, "source": "Quiet window extended into the shoulder"},
     ]
 
@@ -237,7 +240,10 @@ def _placements(segments: List[Dict[str, Any]], duration: float) -> List[Dict[st
         if slack < 0:
             continue
 
-        offsets = [0] if slack < 30 else sorted({0, slack // 2, slack})
+        # Step through the segment rather than sampling three points. On a real
+        # corridor the difference between a 15-minute-earlier start can be
+        # several trains, so the candidates have to be dense enough to find it.
+        offsets = [0] if slack < 15 else list(range(0, slack + 1, 15))
 
         for offset in offsets:
             start_min = to_minutes(seg["start_time"]) + offset
@@ -253,10 +259,50 @@ def _placements(segments: List[Dict[str, Any]], duration: float) -> List[Dict[st
                 "traffic_note": seg["traffic_note"],
             })
 
-            if len(out) >= MAX_OPTIONS:
-                return out
-
     return out
+
+
+def _rank_conflicts(sim: Dict[str, Any]) -> tuple:
+    """
+    How bad a window is. Every window on a busy corridor has some traffic, so
+    the useful question is how many trains and whether they can be held in a
+    loop. A rake that cannot be regulated has to be diverted, which is a far
+    bigger operational cost than one that can wait.
+    """
+    trains = sim.get("conflicting_trains", []) or []
+    hard = sum(1 for t in trains if not t.get("can_be_regulated", False))
+    return (hard, len(trains))
+
+
+def _pick_best(corridor: str, date: str, department: str,
+               placements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Simulates every candidate and returns the least-disruptive few."""
+    scored = []
+
+    for place in placements:
+        sim = simulate_what_if_block(
+            corridor=corridor,
+            proposed_date=date,
+            proposed_start_time=place["start_time"],
+            proposed_end_time=place["end_time"],
+            department=department,
+        )
+        scored.append((_rank_conflicts(sim), place))
+
+    scored.sort(key=lambda item: item[0])
+
+    # Keep the best, but spread them out — three windows fifteen minutes apart
+    # is not a choice. Anything an hour clear of an already-picked option counts
+    # as genuinely different.
+    picked: List[Dict[str, Any]] = []
+    for _, place in scored:
+        start = to_minutes(place["start_time"])
+        if all(abs(start - to_minutes(p["start_time"])) >= 60 for p in picked):
+            picked.append(place)
+        if len(picked) >= MAX_OPTIONS:
+            break
+
+    return picked or [p for _, p in scored[:MAX_OPTIONS]]
 
 
 # ------------------------------------------------------------ block occupancy
@@ -332,19 +378,32 @@ def _next_usable(
 
 # -------------------------------------------------------------------- planner
 
+# An unbroken possession longer than this is not something a corridor can
+# absorb — beyond it the work is split however critical it is, because the
+# alternative is closing the line for most of a day.
+MAX_CONTINUOUS_HOURS = 10.0
+
+
 def _must_run_continuous(priority: str, ml_probability: Optional[float], hours: float) -> bool:
     """
     Work that cannot safely be left part-finished between nights.
 
-    Splitting a critical job across five nights leaves the asset in a part-worked
-    state each morning, which is worse than delaying a train once. The trained
-    model's own probability is allowed to trigger this, not just the dropdown.
+    Splitting a critical job across several nights leaves the asset part-worked
+    each morning, which can be worse than delaying trains once. But this only
+    holds for jobs short enough to actually finish in one possession — a 12-hour
+    unbroken block closes the corridor through the morning peak, so past
+    MAX_CONTINUOUS_HOURS the work is split regardless and the risk is carried by
+    sequencing instead.
+
+    The model can trigger this on its own, but only at high confidence. An
+    earlier threshold of 0.60 pulled ordinary medium-priority jobs into
+    continuous possessions, which is not what the rule is for.
     """
-    if hours <= 8:
+    if hours <= 8 or hours > MAX_CONTINUOUS_HOURS:
         return False
     if str(priority).upper() == "CRITICAL":
         return True
-    return ml_probability is not None and ml_probability >= 0.60
+    return ml_probability is not None and ml_probability >= 0.75
 
 
 def plan_request(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -468,7 +527,7 @@ def plan_request(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     # Case 1 — fits one night.
     if duration <= widest:
-        usable = _placements(windows, duration)
+        usable = _pick_best(corridor, start_date, department, _placements(windows, duration))
         options = [build_option(i, w, "single", duration, 1, 1) for i, w in enumerate(usable)]
         rationale = f"{duration}h of work fits inside one night window, so this stays a single block."
         cadence = "single"

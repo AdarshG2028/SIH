@@ -132,7 +132,10 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
                 plan = generate_sih_optimized_plan(
                     planning_horizon=body.get("planning_horizon", "weekly"),
                     start_date=body.get("start_date", "2026-09-16"),
-                    end_date=body.get("end_date", "2026-09-22"),
+                    # No fallback date here. Substituting one silently pinned
+                    # every plan to a 3-day span, so "weekly" and "monthly"
+                    # returned identical schedules however the planner behaved.
+                    end_date=body.get("end_date"),
                     corridor=body.get("corridor"),
                     task_ids=body.get("task_ids")
                 )
