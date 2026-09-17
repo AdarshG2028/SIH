@@ -68,8 +68,9 @@ function Landing() {
           </h1>
           <p className="mt-5 max-w-[52ch] text-pretty text-sm leading-relaxed text-steel">
             AI plans maintenance blocks across Track, S&amp;T and TRD into shared{" "}
-            <span className="text-cream">shadow blocks</span>, avoids passenger and freight conflicts, and sequences the
-            safety steps between departments — so corridors stop grinding to a halt.
+            <span className="text-cream">shadow blocks</span>, avoids passenger and freight
+            conflicts, and sequences the safety steps between departments — so corridors stop
+            grinding to a halt.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
@@ -92,7 +93,9 @@ function Landing() {
 
         <div className="overflow-hidden rounded-lg bg-ink2/80 hairline">
           <div className="flex items-center justify-between border-b border-line bg-ink3/60 px-4 py-2.5">
-            <span className="font-mono text-[11px] tracking-[0.2em] text-steel">IMPACT · BEFORE → AFTER</span>
+            <span className="font-mono text-[11px] tracking-[0.2em] text-steel">
+              IMPACT · BEFORE → AFTER
+            </span>
             <span className="font-mono text-[10px] text-signal">
               {data?.evaluation_summary?.corridor ?? "LNL–PUNE"}
             </span>
@@ -106,7 +109,9 @@ function Landing() {
               <div className="border-b border-line p-4 md:border-b-0">
                 <div className="label-mono tracking-widest">BLOCKS</div>
                 <div className="mt-2 font-display text-2xl font-semibold">
-                  <span className="mr-2 text-base text-steel/60 line-through">{k?.["blocksBefore"] ?? 7}</span>
+                  <span className="mr-2 text-base text-steel/60 line-through">
+                    {k?.["blocksBefore"] ?? 7}
+                  </span>
                   <span className="text-signal">{k?.["blocksAfter"] ?? 3}</span>
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-clear">
@@ -116,7 +121,9 @@ function Landing() {
               <div className="border-b border-line p-4 md:border-b-0">
                 <div className="label-mono tracking-widest">BLOCK HOURS</div>
                 <div className="mt-2 font-display text-2xl font-semibold">
-                  <span className="mr-2 text-base text-steel/60 line-through">{k?.["durationHoursBefore"] ?? 8.5}</span>
+                  <span className="mr-2 text-base text-steel/60 line-through">
+                    {k?.["durationHoursBefore"] ?? 8.5}
+                  </span>
                   <span className="text-signal">{k?.["durationHoursAfter"] ?? 5.0}</span>
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-clear">
@@ -126,7 +133,9 @@ function Landing() {
               <div className="p-4">
                 <div className="label-mono tracking-widest">CONFLICTS</div>
                 <div className="mt-2 font-display text-2xl font-semibold">
-                  <span className="mr-2 text-base text-steel/60 line-through">{k?.["conflictsBefore"] ?? 5}</span>
+                  <span className="mr-2 text-base text-steel/60 line-through">
+                    {k?.["conflictsBefore"] ?? 5}
+                  </span>
                   <span className="text-clear">{k?.["conflictsAfter"] ?? 0}</span>
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-clear">CLEARED</div>
@@ -134,7 +143,9 @@ function Landing() {
               <div className="bg-signal/5 p-4">
                 <div className="label-mono tracking-widest">AVAILABILITY</div>
                 <div className="mt-2 font-display text-2xl font-semibold">
-                  <span className="mr-2 text-base text-steel/60 line-through">{k?.["availabilityBefore"] ?? 91.4}</span>
+                  <span className="mr-2 text-base text-steel/60 line-through">
+                    {k?.["availabilityBefore"] ?? 91.4}
+                  </span>
                   <span className="text-signal">{k?.["availabilityAfter"] ?? 95.8}</span>
                   <span className="text-sm">%</span>
                 </div>
@@ -150,17 +161,23 @@ function Landing() {
           <div className="rounded-lg bg-ink2/70 p-4 hairline">
             <div className="font-mono text-[10px] tracking-widest text-signal">01 · SUBMIT</div>
             <p className="mt-2 text-xs leading-relaxed text-steel">
-              Track, S&amp;T &amp; TRD file a block request with span, preferred window and resources.
+              Track, S&amp;T &amp; TRD file a block request with span, preferred window and
+              resources.
             </p>
           </div>
           <div className="rounded-lg bg-ink2/70 p-4 hairline">
-            <div className="font-mono text-[10px] tracking-widest text-clear">02 · AI EVALUATES</div>
+            <div className="font-mono text-[10px] tracking-widest text-clear">
+              02 · AI EVALUATES
+            </div>
             <p className="mt-2 text-xs leading-relaxed text-steel">
-              Traffic, weather, asset risk and co-located tasks scored into a ranked window plus alternatives.
+              Traffic, weather, asset risk and co-located tasks scored into a ranked window plus
+              alternatives.
             </p>
           </div>
           <div className="rounded-lg bg-ink2/70 p-4 hairline">
-            <div className="font-mono text-[10px] tracking-widest text-danger">03 · OFFICER DECIDES</div>
+            <div className="font-mono text-[10px] tracking-widest text-danger">
+              03 · OFFICER DECIDES
+            </div>
             <p className="mt-2 text-xs leading-relaxed text-steel">
               Accept, reject, or switch to an alternative slot — full audit trail attached.
             </p>
@@ -170,16 +187,17 @@ function Landing() {
         <Panel title="The problem today">
           <ul className="space-y-2.5 text-sm leading-relaxed text-steel">
             <li>
-              <span className="text-cream">Three separate requests, three separate closures.</span> Track, Signal and
-              OHE teams each ask for their own possession on the same kilometres.
+              <span className="text-cream">Three separate requests, three separate closures.</span>{" "}
+              Track, Signal and OHE teams each ask for their own possession on the same kilometres.
             </li>
             <li>
-              <span className="text-cream">Daytime blocks collide with the timetable.</span> Passenger and freight
-              services are delayed or regulated because nobody checked the passing times first.
+              <span className="text-cream">Daytime blocks collide with the timetable.</span>{" "}
+              Passenger and freight services are delayed or regulated because nobody checked the
+              passing times first.
             </li>
             <li>
-              <span className="text-cream">Some corridors starve.</span> Busy sections get their block requests denied
-              again and again, so assets keep ageing without attention.
+              <span className="text-cream">Some corridors starve.</span> Busy sections get their
+              block requests denied again and again, so assets keep ageing without attention.
             </li>
           </ul>
         </Panel>
@@ -199,7 +217,9 @@ function Landing() {
               <div key={c.label} className="rounded-md bg-ink3/50 p-3 hairline">
                 <div className="flex items-center gap-2">
                   <Lamp tone={c.tone} pulse={false} />
-                  <span className="font-mono text-[10px] tracking-widest text-cream">{c.label}</span>
+                  <span className="font-mono text-[10px] tracking-widest text-cream">
+                    {c.label}
+                  </span>
                 </div>
                 <p className="mt-1.5 text-xs leading-relaxed text-steel">{c.body}</p>
               </div>
@@ -219,12 +239,16 @@ function Landing() {
               <li className="relative pl-5">
                 <span className="absolute -left-[5px] top-1 size-2.5 rounded-full bg-signal text-signal lamp" />
                 <div className="font-mono text-[10px] text-signal">PHASE 2</div>
-                <div className="text-sm text-cream">Engineering · tamping, rail renewal, joint inspection</div>
+                <div className="text-sm text-cream">
+                  Engineering · tamping, rail renewal, joint inspection
+                </div>
               </li>
               <li className="relative pl-5">
                 <span className="absolute -left-[5px] top-1 size-2.5 rounded-full bg-steel" />
                 <div className="font-mono text-[10px] text-steel">PHASE 3</div>
-                <div className="text-sm text-cream">S&amp;T · point machine testing &amp; interlocking</div>
+                <div className="text-sm text-cream">
+                  S&amp;T · point machine testing &amp; interlocking
+                </div>
               </li>
               <li className="relative pl-5">
                 <span className="absolute -left-[5px] top-1 size-2.5 rounded-full bg-clear text-clear" />
@@ -237,19 +261,31 @@ function Landing() {
           <div className="border-t border-line bg-ink/60 px-4 py-3">
             <div className="mb-2 font-mono text-[10px] tracking-[0.2em] text-steel">EXPLORE</div>
             <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
-              <Link to="/what-if" className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3">
-                <span className="block text-cream">WHAT-IF SIMULATOR</span>
-                <span className="mt-1 block text-steel">Test a slot against trains</span>
+              <Link
+                to="/schedule"
+                className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3"
+              >
+                <span className="block text-cream">BLOCK CALENDAR</span>
+                <span className="mt-1 block text-steel">Week and month view</span>
               </Link>
-              <Link to="/plan" className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3">
-                <span className="block text-cream">PLAN GENERATOR</span>
-                <span className="mt-1 block text-steel">Optimised weekly plan</span>
+              <Link
+                to="/priority"
+                className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3"
+              >
+                <span className="block text-cream">PRIORITY SCORING</span>
+                <span className="mt-1 block text-steel">What the AI ranks first</span>
               </Link>
-              <Link to="/risks" className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3">
+              <Link
+                to="/risks"
+                className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3"
+              >
                 <span className="block text-cream">ASSET RISK</span>
                 <span className="mt-1 block text-steel">Failure probability</span>
               </Link>
-              <Link to="/impact" className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3">
+              <Link
+                to="/impact"
+                className="rounded-md bg-ink3/60 p-2.5 hairline transition hover:bg-ink3"
+              >
                 <span className="block text-cream">IMPACT</span>
                 <span className="mt-1 block text-steel">Before vs after AI</span>
               </Link>

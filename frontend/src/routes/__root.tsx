@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "application-name", content: "Shadowblock" },
+      { name: "application-name", content: "Block-AI" },
     ],
     links: [
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
@@ -129,16 +129,20 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { StationProvider } from "@/lib/station-context";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteShell>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </SiteShell>
-      <Toaster />
+      <StationProvider>
+        <SiteShell>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </SiteShell>
+        <Toaster />
+      </StationProvider>
     </QueryClientProvider>
   );
 }

@@ -35,7 +35,7 @@ function RequestDetail() {
 
   return (
     <div className="space-y-6">
-      <Link to="/requests" className="font-mono text-[11px] text-steel hover:text-cream">
+      <Link to="/dashboard" className="font-mono text-[11px] text-steel hover:text-cream">
         ← ALL REQUESTS
       </Link>
       <AsyncBlock isLoading={isLoading} error={error} data={data} loadingLabel="Loading request…">
@@ -65,7 +65,6 @@ function RequestView({ request: r }: { request: BlockRequest }) {
     ...(d?.recommendedWindow ? [{ ...d.recommendedWindow, optionId: "RECOMMENDED" }] : []),
     ...(d?.alternativeOptions ?? []),
   ];
-  const coord = d?.multiDepartmentCoordination;
   const safety = d?.safetyProtocols;
   const precautions = Array.isArray(safety?.safetyPrecautions)
     ? safety.safetyPrecautions
@@ -163,53 +162,6 @@ function RequestView({ request: r }: { request: BlockRequest }) {
                   </li>
                 ))}
               </ul>
-            </Panel>
-          ) : null}
-
-          {coord ? (
-            <Panel
-              title="Shadow block coordination"
-              right={
-                coord.isMultiDepartment
-                  ? `${fmtNum(coord.downtimeSavedHours)} H DOWNTIME SAVED`
-                  : "SINGLE DEPARTMENT"
-              }
-            >
-              <div className="flex flex-wrap gap-1.5">
-                {(coord.integratedDepartments ?? []).map((dep) => (
-                  <Tag key={dep} tone="steel">
-                    {dep}
-                  </Tag>
-                ))}
-              </div>
-              {coord.primaryTask ? (
-                <div className="mt-4">
-                  <div className="label-mono mb-2 tracking-widest">Primary task</div>
-                  <KeyValueGrid data={coord.primaryTask} />
-                </div>
-              ) : null}
-              {coord.coLocatedTasks?.length ? (
-                <div className="mt-4">
-                  <div className="label-mono mb-2 tracking-widest">
-                    Co-located tasks merged into this block
-                  </div>
-                  <DataTable
-                    head={["Task", "Department", "Type", "Span", "Hours", "Workers", "Equipment"]}
-                  >
-                    {coord.coLocatedTasks.map((t, i) => (
-                      <tr key={String(t["taskId"] ?? i)}>
-                        <td className="text-signal">{display(t["taskId"])}</td>
-                        <td>{display(t["department"])}</td>
-                        <td>{display(t["taskType"])}</td>
-                        <td>{display(t["span"])}</td>
-                        <td>{display(t["durationHours"])}</td>
-                        <td>{display(t["workers"])}</td>
-                        <td className="text-steel">{display(t["equipment"])}</td>
-                      </tr>
-                    ))}
-                  </DataTable>
-                </div>
-              ) : null}
             </Panel>
           ) : null}
 

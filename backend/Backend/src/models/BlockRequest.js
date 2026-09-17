@@ -61,12 +61,16 @@ const blockRequestSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["recommended", "needs_review", "accepted", "rejected"],
+      enum: ["recommended", "needs_review", "accepted", "rejected", "completed"],
       default: "recommended",
       index: true,
     },
 
     selectedWindow: mongoose.Schema.Types.Mixed,
+
+    // Set when the work is physically finished on site. The request stays in
+    // the collection as history; the workbench filters on it.
+    completedAt: Date,
 
     // Latest imported ML risk score for the form's assetId (if provided).
     assetRisk: mongoose.Schema.Types.Mixed,

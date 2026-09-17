@@ -4,6 +4,7 @@ const {
   getMlApiUrl,
   evaluateBlockRequest,
   checkMlHealth,
+  planRequest,
 } = require("../services/mlClient.service");
 
 const ML_STATUS_MAP = {
@@ -68,6 +69,22 @@ const getLatestAssetRisk = async (assetId) => {
     risk_level: risk.risk_level,
     recommended_action: risk.recommended_action,
   };
+};
+
+/**
+ * Asks the Python planner for the windows this request can be given.
+ *
+ * Nothing is saved here — the officer has not chosen yet. This is the step that
+ * puts the trained model and the real corridor data behind the timings the form
+ * shows, instead of the browser guessing at them.
+ */
+const planBlockRequest = async (req, res, next) => {
+  try {
+    const plan = await planRequest(req.body || {});
+    res.json({ success: true, data: plan });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const createBlockRequest = async (req, res, next) => {
@@ -250,6 +267,41 @@ const selectAlternative = async (req, res, next) => {
   }
 };
 
+/**
+ * Close a request out once the work is done on site. This is what removes it
+ * from the station workbench — the record itself is kept as history.
+ */
+const completeBlockRequest = async (req, res, next) => {
+  try {
+    const { by, note } = req.body || {};
+
+    const blockRequest = await BlockRequest.findOne({
+      requestId: req.params.requestId,
+    });
+
+    if (!blockRequest) {
+      return res.status(404).json({
+        success: false,
+        message: `Block request ${req.params.requestId} not found`,
+      });
+    }
+
+    blockRequest.status = "completed";
+    blockRequest.completedAt = new Date();
+    blockRequest.auditTrail.push({
+      action: "completed",
+      by: by || "user",
+      note,
+    });
+
+    await blockRequest.save();
+
+    res.json({ success: true, data: blockRequest });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const decideBlockRequest = async (req, res, next) => {
   try {
     const { decision, by, note } = req.body || {};
@@ -308,9 +360,11 @@ const mlHealth = async (req, res, next) => {
 
 module.exports = {
   createBlockRequest,
+  planBlockRequest,
   listBlockRequests,
   getBlockRequest,
   selectAlternative,
   decideBlockRequest,
+  completeBlockRequest,
   mlHealth,
 };

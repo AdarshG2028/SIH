@@ -31,6 +31,8 @@ if str(PLANNING_DIR) not in sys.path:
 from priority_scoring_model import calculate_maintenance_priority
 from what_if_simulator import simulate_what_if_block
 from evaluation_metrics import compute_prototype_kpis
+from request_planner import plan_request
+from data_loader import get_all_department_tasks
 from block_planner import generate_sih_optimized_plan, evaluate_user_request
 from data_loader import get_all_department_tasks
 
@@ -99,7 +101,10 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/ai/kpis":
             self._set_headers(200)
-            kpi_data = compute_prototype_kpis()
+            # Use the real backlog so this endpoint agrees with /generate-plan
+            # instead of reporting the illustrative fallback constants.
+            backlog = get_all_department_tasks()
+            kpi_data = compute_prototype_kpis(all_tasks=backlog, horizon_days=7)
             self.wfile.write(json.dumps(kpi_data, indent=2).encode("utf-8"))
             return
 
@@ -142,7 +147,14 @@ class RailwayAIRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(priority_res, indent=2).encode("utf-8"))
                 return
 
-            # 3. What-If Simulation
+            # 3. Plan a single user request (the block request form)
+            elif path == "/api/ai/plan-request":
+                plan_res = plan_request(body)
+                self._set_headers(200)
+                self.wfile.write(json.dumps(plan_res, indent=2).encode("utf-8"))
+                return
+
+            # 4. What-If Simulation
             elif path == "/api/ai/what-if":
                 what_if_res = simulate_what_if_block(
                     corridor=body.get("corridor", "LNL-PUNE"),
@@ -186,6 +198,7 @@ def run_server(port: int = 8000):
     print(f"  • POST /api/ai/priority       (0–100 Priority score & contributing factors)")
     print(f"  • POST /api/ai/what-if        (What-If train conflict simulator)")
     print(f"  • POST /api/ai/user-request   (Evaluates interactive user block forms)")
+    print(f"  • POST /api/ai/plan-request   (Window options for one block request)")
     print(f"  • GET  /api/ai/kpis           (Before vs After evaluation metrics)")
     print(f"  • GET  /api/health            (Service health check)")
     print("=" * 75)
