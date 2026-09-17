@@ -1664,7 +1664,12 @@ def _default_horizon_days(planning_horizon: str) -> int:
     """Fallback span (in days) used only when the caller gives start_date == end_date,
     so 'weekly' and 'monthly' actually mean something even if the frontend forgets
     to send an end_date."""
-    return 30 if str(planning_horizon).lower().startswith("month") else 7
+    horizon = str(planning_horizon).lower()
+    if horizon.startswith("day") or horizon.startswith("daily"):
+        return 1
+    if horizon.startswith("month"):
+        return 30
+    return 7
 
 
 def _corridor_quiet_window(c_name: str) -> str:
@@ -1677,6 +1682,37 @@ def _corridor_quiet_window(c_name: str) -> str:
     return "01:00"  # last-resort default only if the corridor isn't in the dataset
 
 
+def _corridor_quiet_span(c_name: str) -> tuple:
+    """The corridor's quiet window as (start, end) minutes past midnight."""
+    info = get_corridor_info(c_name) or {}
+    quiet_hours = (info.get("traffic_profile") or {}).get("quiet_corridor_hours") or []
+
+    if quiet_hours:
+        try:
+            start, end = [p.strip() for p in str(quiet_hours[0]).split("-")]
+            start_min, end_min = time_to_minutes(start), time_to_minutes(end)
+            if end_min > start_min:
+                return start_min, end_min
+        except (ValueError, AttributeError, IndexError):
+            pass
+
+    return time_to_minutes("01:00"), time_to_minutes("04:30")
+
+
+def _rank_conflicts(sim: dict) -> tuple:
+    """
+    Sort key for how bad a window is.
+
+    On a real corridor every window has some traffic, so the question is not
+    "any conflicts?" but "how many, and can they be held?". A rake that can be
+    regulated into a loop costs minutes; one that cannot has to be diverted or
+    the block abandoned. Unregulatable trains therefore dominate the ranking.
+    """
+    trains = sim.get("conflicting_trains", []) or []
+    hard = sum(1 for t in trains if not t.get("can_be_regulated", False))
+    return (hard, len(trains))
+
+
 def _best_start_time(c_name: str, block_date: str, duration_hours: float, base_start: str) -> tuple:
     """
     Tries the corridor's quiet-window start plus a handful of nearby offsets
@@ -1685,23 +1721,32 @@ def _best_start_time(c_name: str, block_date: str, duration_hours: float, base_s
     returns (start_time, end_time, sim_result) for whichever candidate has
     the fewest real timetable conflicts.
     """
-    base_min = time_to_minutes(base_start)
-    candidate_starts = [base_min, base_min - 30, base_min + 30, base_min - 60, base_min + 60]
+    span_start, span_end = _corridor_quiet_span(c_name)
+    duration_min = int(duration_hours * 60)
+
+    # Sweep the whole quiet window in 15-minute steps, plus an hour of shoulder
+    # either side. The previous search tried five offsets within an hour of the
+    # window start, which is far too narrow now that conflicts are checked
+    # against the real ~10k-train timetable rather than a four-train fixture.
+    candidates = list(range(span_start - 150, max(span_start, span_end - duration_min) + 151, 15))
+    if time_to_minutes(base_start) not in candidates:
+        candidates.insert(0, time_to_minutes(base_start))
 
     best = None
-    for cand_min in candidate_starts:
+    for cand_min in candidates:
         start_time = minutes_to_time(cand_min)
-        end_time = minutes_to_time(cand_min + int(duration_hours * 60))
+        end_time = minutes_to_time(cand_min + duration_min)
         sim = simulate_what_if_block(
             corridor=c_name,
             proposed_date=block_date,
             proposed_start_time=start_time,
             proposed_end_time=end_time
         )
-        n_conflicts = len(sim.get("conflicting_trains", []))
-        if best is None or n_conflicts < best[3]:
-            best = (start_time, end_time, sim, n_conflicts)
-        if n_conflicts == 0:
+        rank = _rank_conflicts(sim)
+
+        if best is None or rank < best[3]:
+            best = (start_time, end_time, sim, rank)
+        if rank == (0, 0):
             break
 
     return best[0], best[1], best[2]
@@ -1710,7 +1755,7 @@ def _best_start_time(c_name: str, block_date: str, duration_hours: float, base_s
 def generate_sih_optimized_plan(
     planning_horizon: str = "weekly",
     start_date: str = "2026-09-16",
-    end_date: str = "2026-09-22",
+    end_date: str = None,
     corridor: str = None,
     task_ids: list = None,
     max_tasks_per_block: int = 3
