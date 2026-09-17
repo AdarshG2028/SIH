@@ -22,12 +22,27 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from ML.src.planning.data_loader import get_all_department_tasks, get_goods_forecast
-from ML.src.planning.priority_scoring_model import calculate_maintenance_priority
-from ML.src.planning.what_if_simulator import simulate_what_if_block
-from ML.src.planning.evaluation_metrics import compute_prototype_kpis, print_kpi_report
-from ML.src.planning.block_planner import generate_sih_optimized_plan
-from ML.src.api_server import HTTPServer, RailwayAIRequestHandler
+try:
+    from ML.src.planning.data_loader import get_all_department_tasks, get_goods_forecast
+    from ML.src.planning.priority_scoring_model import calculate_maintenance_priority
+    from ML.src.planning.what_if_simulator import simulate_what_if_block
+    from ML.src.planning.evaluation_metrics import compute_prototype_kpis, print_kpi_report
+    from ML.src.planning.block_planner import generate_sih_optimized_plan
+    from ML.src.api_server import HTTPServer, RailwayAIRequestHandler
+except ImportError:
+    # This copy's layout is backend/ML/planning (no src/ level), unlike the
+    # master repo's ML/src/planning — fall back to a path-relative import.
+    ML_DIR = Path(__file__).resolve().parents[1]
+    if str(ML_DIR) not in sys.path:
+        sys.path.insert(0, str(ML_DIR))
+    if str(ML_DIR / "planning") not in sys.path:
+        sys.path.insert(0, str(ML_DIR / "planning"))
+    from data_loader import get_all_department_tasks, get_goods_forecast
+    from priority_scoring_model import calculate_maintenance_priority
+    from what_if_simulator import simulate_what_if_block
+    from evaluation_metrics import compute_prototype_kpis, print_kpi_report
+    from block_planner import generate_sih_optimized_plan
+    from api_server import HTTPServer, RailwayAIRequestHandler
 
 
 def run_full_sih_verification():
@@ -93,7 +108,7 @@ def run_full_sih_verification():
         print(f"    • Time Window:         {blk['start_time']} → {blk['end_time']} ({blk['duration']} hrs)")
         print(f"    • Integrated Depts:    {', '.join(blk['departments'])}")
         print(f"    • Affected Assets:     {', '.join(blk['affected_assets'])}")
-        print(f"    • Affected Trains:     {len(blk['affected_trains'])} (Timetable conflicts avoided)")
+        print(f"    • Affected Trains:     {len(blk['affected_trains'])} (residual conflicts at the best window found)")
         print(f"    • Optimization Score:  {blk['optimization_score']}/100")
         print(f"    • Tasks Selected:      {len(blk['selected_tasks'])} tasks co-located")
         print(f"    • Recommendation:      {blk['reason_recommendation']}")
@@ -102,7 +117,12 @@ def run_full_sih_verification():
     # 5. BEFORE VS AFTER EVALUATION METRICS
     # -------------------------------------------------------------------------
     print("\n[SECTION 5: EVALUATION METRICS (BEFORE VS AFTER)]")
-    print_kpi_report()
+    all_backlog_tasks = get_all_department_tasks()
+    print_kpi_report(
+        all_tasks=all_backlog_tasks,
+        generated_blocks=plan["generated_blocks"],
+        horizon_days=plan["horizon_days"]
+    )
 
     # -------------------------------------------------------------------------
     # 6. REST API SERVER VERIFICATION

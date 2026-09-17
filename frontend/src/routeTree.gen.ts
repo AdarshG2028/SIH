@@ -16,14 +16,10 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MapRouteImport } from './routes/map'
-import { Route as PlanRouteImport } from './routes/plan'
-import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as PriorityRouteImport } from './routes/priority'
-import { Route as TasksRouteImport } from './routes/tasks'
-import { Route as WhatIfRouteImport } from './routes/what-if'
+import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as AssetsIndexRouteImport } from './routes/assets/index'
 import { Route as AssetsAssetIdRouteImport } from './routes/assets/$assetId'
-import { Route as RequestsIndexRouteImport } from './routes/requests/index'
 import { Route as RequestsRequestIdRouteImport } from './routes/requests/$requestId'
 import { Route as RequestsNewRouteImport } from './routes/requests/new'
 import { Route as RisksIndexRouteImport } from './routes/risks/index'
@@ -64,29 +60,14 @@ const MapRoute = MapRouteImport.update({
   path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanningRoute = PlanningRouteImport.update({
-  id: '/planning',
-  path: '/planning',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PriorityRoute = PriorityRouteImport.update({
   id: '/priority',
   path: '/priority',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksRoute = TasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WhatIfRoute = WhatIfRouteImport.update({
-  id: '/what-if',
-  path: '/what-if',
+const ScheduleRoute = ScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssetsIndexRoute = AssetsIndexRouteImport.update({
@@ -97,11 +78,6 @@ const AssetsIndexRoute = AssetsIndexRouteImport.update({
 const AssetsAssetIdRoute = AssetsAssetIdRouteImport.update({
   id: '/assets/$assetId',
   path: '/assets/$assetId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RequestsIndexRoute = RequestsIndexRouteImport.update({
-  id: '/requests/',
-  path: '/requests/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RequestsRequestIdRoute = RequestsRequestIdRouteImport.update({
@@ -133,17 +109,13 @@ export interface FileRoutesByFullPath {
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
   '/map': typeof MapRoute
-  '/plan': typeof PlanRoute
-  '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
-  '/tasks': typeof TasksRoute
-  '/what-if': typeof WhatIfRoute
+  '/schedule': typeof ScheduleRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/requests/$requestId': typeof RequestsRequestIdRoute
   '/requests/new': typeof RequestsNewRoute
   '/risks/$assetId': typeof RisksAssetIdRoute
   '/assets/': typeof AssetsIndexRoute
-  '/requests/': typeof RequestsIndexRoute
   '/risks/': typeof RisksIndexRoute
 }
 export interface FileRoutesByTo {
@@ -154,17 +126,13 @@ export interface FileRoutesByTo {
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
   '/map': typeof MapRoute
-  '/plan': typeof PlanRoute
-  '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
-  '/tasks': typeof TasksRoute
-  '/what-if': typeof WhatIfRoute
+  '/schedule': typeof ScheduleRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/requests/$requestId': typeof RequestsRequestIdRoute
   '/requests/new': typeof RequestsNewRoute
   '/risks/$assetId': typeof RisksAssetIdRoute
   '/assets': typeof AssetsIndexRoute
-  '/requests': typeof RequestsIndexRoute
   '/risks': typeof RisksIndexRoute
 }
 export interface FileRoutesById {
@@ -176,17 +144,13 @@ export interface FileRoutesById {
   '/data': typeof DataRoute
   '/impact': typeof ImpactRoute
   '/map': typeof MapRoute
-  '/plan': typeof PlanRoute
-  '/planning': typeof PlanningRoute
   '/priority': typeof PriorityRoute
-  '/tasks': typeof TasksRoute
-  '/what-if': typeof WhatIfRoute
+  '/schedule': typeof ScheduleRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/requests/$requestId': typeof RequestsRequestIdRoute
   '/requests/new': typeof RequestsNewRoute
   '/risks/$assetId': typeof RisksAssetIdRoute
   '/assets/': typeof AssetsIndexRoute
-  '/requests/': typeof RequestsIndexRoute
   '/risks/': typeof RisksIndexRoute
 }
 export interface FileRouteTypes {
@@ -199,17 +163,13 @@ export interface FileRouteTypes {
     | '/data'
     | '/impact'
     | '/map'
-    | '/plan'
-    | '/planning'
     | '/priority'
-    | '/tasks'
-    | '/what-if'
+    | '/schedule'
     | '/assets/$assetId'
     | '/requests/$requestId'
     | '/requests/new'
     | '/risks/$assetId'
     | '/assets/'
-    | '/requests/'
     | '/risks/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,17 +180,13 @@ export interface FileRouteTypes {
     | '/data'
     | '/impact'
     | '/map'
-    | '/plan'
-    | '/planning'
     | '/priority'
-    | '/tasks'
-    | '/what-if'
+    | '/schedule'
     | '/assets/$assetId'
     | '/requests/$requestId'
     | '/requests/new'
     | '/risks/$assetId'
     | '/assets'
-    | '/requests'
     | '/risks'
   id:
     | '__root__'
@@ -241,17 +197,13 @@ export interface FileRouteTypes {
     | '/data'
     | '/impact'
     | '/map'
-    | '/plan'
-    | '/planning'
     | '/priority'
-    | '/tasks'
-    | '/what-if'
+    | '/schedule'
     | '/assets/$assetId'
     | '/requests/$requestId'
     | '/requests/new'
     | '/risks/$assetId'
     | '/assets/'
-    | '/requests/'
     | '/risks/'
   fileRoutesById: FileRoutesById
 }
@@ -263,17 +215,13 @@ export interface RootRouteChildren {
   DataRoute: typeof DataRoute
   ImpactRoute: typeof ImpactRoute
   MapRoute: typeof MapRoute
-  PlanRoute: typeof PlanRoute
-  PlanningRoute: typeof PlanningRoute
   PriorityRoute: typeof PriorityRoute
-  TasksRoute: typeof TasksRoute
-  WhatIfRoute: typeof WhatIfRoute
+  ScheduleRoute: typeof ScheduleRoute
   AssetsAssetIdRoute: typeof AssetsAssetIdRoute
   RequestsRequestIdRoute: typeof RequestsRequestIdRoute
   RequestsNewRoute: typeof RequestsNewRoute
   RisksAssetIdRoute: typeof RisksAssetIdRoute
   AssetsIndexRoute: typeof AssetsIndexRoute
-  RequestsIndexRoute: typeof RequestsIndexRoute
   RisksIndexRoute: typeof RisksIndexRoute
 }
 
@@ -328,20 +276,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planning': {
-      id: '/planning'
-      path: '/planning'
-      fullPath: '/planning'
-      preLoaderRoute: typeof PlanningRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/priority': {
       id: '/priority'
       path: '/priority'
@@ -349,18 +283,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PriorityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/what-if': {
-      id: '/what-if'
-      path: '/what-if'
-      fullPath: '/what-if'
-      preLoaderRoute: typeof WhatIfRouteImport
+    '/schedule': {
+      id: '/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof ScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assets/': {
@@ -375,13 +302,6 @@ declare module '@tanstack/react-router' {
       path: '/assets/$assetId'
       fullPath: '/assets/$assetId'
       preLoaderRoute: typeof AssetsAssetIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/requests/': {
-      id: '/requests/'
-      path: '/requests'
-      fullPath: '/requests/'
-      preLoaderRoute: typeof RequestsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/requests/$requestId': {
@@ -423,17 +343,13 @@ const rootRouteChildren: RootRouteChildren = {
   DataRoute: DataRoute,
   ImpactRoute: ImpactRoute,
   MapRoute: MapRoute,
-  PlanRoute: PlanRoute,
-  PlanningRoute: PlanningRoute,
   PriorityRoute: PriorityRoute,
-  TasksRoute: TasksRoute,
-  WhatIfRoute: WhatIfRoute,
+  ScheduleRoute: ScheduleRoute,
   AssetsAssetIdRoute: AssetsAssetIdRoute,
   RequestsRequestIdRoute: RequestsRequestIdRoute,
   RequestsNewRoute: RequestsNewRoute,
   RisksAssetIdRoute: RisksAssetIdRoute,
   AssetsIndexRoute: AssetsIndexRoute,
-  RequestsIndexRoute: RequestsIndexRoute,
   RisksIndexRoute: RisksIndexRoute,
 }
 export const routeTree = rootRouteImport

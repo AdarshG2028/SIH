@@ -7,9 +7,16 @@ Supports interactive simulation when a railway user proposes or modifies a block
 1. System checks passenger timetable and COA goods train conflicts.
 2. System calculates delay and passenger impact.
 3. System recommends a conflict-free alternative time.
+
+Passenger-train conflict checking is driven by the REAL national schedule
+dataset (data/raw/schedules.jsonl + trains.csv, ~10k trains), indexed per
+corridor in data_loader.get_corridor_train_passages(), rather than a
+hand-typed timetable for two demo corridors. This means what-if checking
+now works for any corridor defined in corridor_availability.json.
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -18,9 +25,20 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 try:
-    from ML.src.planning.data_loader import get_goods_forecast, get_corridor_info
+    from ML.src.planning.data_loader import (
+        get_goods_forecast, get_corridor_info, get_corridor_train_passages
+    )
 except ImportError:
-    from data_loader import get_goods_forecast, get_corridor_info
+    from data_loader import get_goods_forecast, get_corridor_info, get_corridor_train_passages
+
+try:
+    from live_train_service import fetch_live_train_status
+except ImportError:
+    try:
+        from planning.live_train_service import fetch_live_train_status
+    except ImportError:
+        def fetch_live_train_status(t):
+            return {"live_delay_minutes": 0, "cause": "On Time"}
 
 
 def time_to_minutes(val: str) -> int:
@@ -36,23 +54,27 @@ def minutes_to_time(m: int) -> str:
     return f"{m // 60:02d}:{m % 60:02d}"
 
 
-# Realistic train timetable profiles for SIH demonstration corridors
-CORRIDOR_PASSENGER_TIMETABLE = {
-    "LNL-PUNE": [
-        {"train_number": "11007", "train_name": "Deccan Express", "type": "Express", "time": "10:45", "priority": "HIGH"},
-        {"train_number": "99815", "train_name": "LNL-SVJR Suburban Local", "type": "Suburban", "time": "11:15", "priority": "COMMUTER"},
-        {"train_number": "12123", "train_name": "Deccan Queen Superfast", "type": "Superfast", "time": "19:15", "priority": "VIP"},
-        {"train_number": "11009", "train_name": "Sinhagad Express", "type": "Express", "time": "17:45", "priority": "HIGH"},
-        {"train_number": "99801", "train_name": "LNL-PUNE Morning Local", "type": "Suburban", "time": "06:15", "priority": "COMMUTER"},
-        {"train_number": "99834", "train_name": "PUNE-LNL Late Evening Local", "type": "Suburban", "time": "22:45", "priority": "COMMUTER"}
-    ],
-    "BPL-RKMP": [
-        {"train_number": "12155", "train_name": "Bhopal Shaan-e-Bhopal Express", "type": "Superfast", "time": "10:45", "priority": "VIP"},
-        {"train_number": "12002", "train_name": "New Delhi Shatabdi Express", "type": "Shatabdi", "time": "14:40", "priority": "VIP"},
-        {"train_number": "20171", "train_name": "Rani Kamlapati Vande Bharat", "type": "Vande Bharat", "time": "05:40", "priority": "VIP"},
-        {"train_number": "12854", "train_name": "Amarkantak Express", "type": "Express", "time": "16:15", "priority": "HIGH"}
-    ]
-}
+def _resolve_corridor_key(corridor: str) -> str:
+    """
+    Uses the corridor id as given if it's a real key in
+    corridor_availability.json; otherwise falls back to a loose match so
+    callers that pass a station name or partial id still resolve to the
+    right corridor.
+    """
+    if get_corridor_info(corridor):
+        return corridor
+    upper = (corridor or "").upper()
+    for known in ["LNL-PUNE", "BPL-RKMP"]:
+        if any(tok in upper for tok in known.split("-")):
+            return known
+    return corridor
+
+
+def _runs_on_day(runs_days: str, weekday_abbr: str) -> bool:
+    runs_days = (runs_days or "Daily").strip()
+    if runs_days.lower() == "daily":
+        return True
+    return weekday_abbr in [d.strip() for d in runs_days.split(",")]
 
 
 def simulate_what_if_block(
@@ -64,29 +86,53 @@ def simulate_what_if_block(
     maintenance_type: str = "Track Maintenance"
 ) -> Dict[str, Any]:
     """
-    Simulates operational conflict and impact for a proposed block window.
+    Simulates operational conflict and impact for a proposed block window,
+    checked against the real train timetable for whichever corridor is
+    passed in.
     """
-    corridor_key = "LNL-PUNE" if "LNL" in corridor.upper() or "PUNE" in corridor.upper() else "BPL-RKMP"
-    
+    corridor_key = _resolve_corridor_key(corridor)
+
     start_min = time_to_minutes(proposed_start_time)
     end_min = time_to_minutes(proposed_end_time)
     if end_min <= start_min:
         end_min += 24 * 60
     duration_hrs = round((end_min - start_min) / 60.0, 1)
 
-    # 1. Check Passenger Train Conflicts
+    try:
+        weekday_abbr = datetime.strptime(proposed_date, "%Y-%m-%d").strftime("%a")
+    except (ValueError, TypeError):
+        weekday_abbr = "Mon"
+
+    # 1. Check Passenger Train Conflicts against the REAL schedule dataset
+    #    (with real-time dynamic delays applied on top of the scheduled time).
     passenger_conflicts = []
-    timetable = CORRIDOR_PASSENGER_TIMETABLE.get(corridor_key, [])
+    seen_trains = set()
+    timetable = [
+        p for p in get_corridor_train_passages(corridor_key)
+        if _runs_on_day(p.get("runs_days"), weekday_abbr)
+    ]
     for trn in timetable:
+        train_number = trn["train_number"]
         t_min = time_to_minutes(trn["time"])
-        if start_min <= t_min <= end_min:
+        live_status = fetch_live_train_status(train_number)
+        delay_min = live_status.get("live_delay_minutes", 0)
+        effective_min = t_min + delay_min
+
+        # Check if either scheduled or delayed effective time intersects the block window
+        if start_min <= effective_min <= end_min or (start_min <= t_min <= end_min):
+            if train_number in seen_trains:
+                continue  # same train can pass 2+ corridor stations; count once
+            seen_trains.add(train_number)
             passenger_conflicts.append({
-                "train_number": trn["train_number"],
+                "train_number": train_number,
                 "train_name": trn["train_name"],
                 "train_type": trn["type"],
                 "scheduled_passage": trn["time"],
+                "effective_passage": minutes_to_time(effective_min),
+                "live_delay_minutes": delay_min,
+                "delay_reason": live_status.get("cause", "On Time"),
                 "priority": trn["priority"],
-                "estimated_delay_minutes": end_min - t_min
+                "estimated_delay_minutes": max(15, end_min - effective_min)
             })
 
     # 2. Check Goods / Freight Train Conflicts from COA
@@ -112,21 +158,21 @@ def simulate_what_if_block(
     # 3. Calculate Impact
     total_passenger_delay = sum(c["estimated_delay_minutes"] for c in passenger_conflicts)
     total_freight_delay = sum(c["delay_minutes"] for c in goods_conflicts)
-    
-    # 4. Search for Clean Alternative Window
-    # Preferred quiet slots: Overnight (01:00 - 04:30) or afternoon non-peak (15:00 - 17:00)
+
+    # 4. Search for a clean alternative window by actually re-checking each
+    #    candidate against the real timetable (not just a 0-conflict guess).
     candidate_alternatives = [
         {"start": "01:30", "end": minutes_to_time(time_to_minutes("01:30") + int(duration_hrs * 60))},
+        {"start": "02:00", "end": minutes_to_time(time_to_minutes("02:00") + int(duration_hrs * 60))},
+        {"start": "03:00", "end": minutes_to_time(time_to_minutes("03:00") + int(duration_hrs * 60))},
         {"start": "15:30", "end": minutes_to_time(time_to_minutes("15:30") + int(duration_hrs * 60))},
-        {"start": "02:00", "end": minutes_to_time(time_to_minutes("02:00") + int(duration_hrs * 60))}
     ]
 
     best_alternative = None
     for alt in candidate_alternatives:
         a_start = time_to_minutes(alt["start"])
         a_end = time_to_minutes(alt["end"])
-        
-        # Check conflicts in alternative
+
         alt_conflicts = 0
         for trn in timetable:
             t_m = time_to_minutes(trn["time"])
@@ -137,16 +183,26 @@ def simulate_what_if_block(
                 "start_time": alt["start"],
                 "end_time": alt["end"],
                 "conflicts": 0,
-                "note": "Zero passenger train timetable conflicts"
+                "note": "Zero passenger train timetable conflicts (verified against real schedule data)"
             }
             break
 
     if not best_alternative:
+        # Every candidate had some conflict; recommend the one with the
+        # fewest instead of silently claiming zero.
+        scored_alts = []
+        for alt in candidate_alternatives:
+            a_start = time_to_minutes(alt["start"])
+            a_end = time_to_minutes(alt["end"])
+            c = sum(1 for trn in timetable if a_start <= time_to_minutes(trn["time"]) <= a_end)
+            scored_alts.append((c, alt))
+        scored_alts.sort(key=lambda x: x[0])
+        best_conflicts, best_alt = scored_alts[0]
         best_alternative = {
-            "start_time": "01:30",
-            "end_time": minutes_to_time(time_to_minutes("01:30") + int(duration_hrs * 60)),
-            "conflicts": 0,
-            "note": "Overnight quiet corridor window"
+            "start_time": best_alt["start"],
+            "end_time": best_alt["end"],
+            "conflicts": best_conflicts,
+            "note": f"Lowest-conflict window available ({best_conflicts} residual conflict(s))"
         }
 
     # 5. Formulate Recommendation

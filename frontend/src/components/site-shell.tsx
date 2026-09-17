@@ -1,19 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { backendHealthQuery, healthQuery } from "@/lib/queries";
 import { API_BASE_URL } from "@/lib/api";
 import { Lamp } from "@/components/control";
 import { PERSONAS, usePersona } from "@/lib/persona";
+import { useStation } from "@/lib/station-context";
+import { StationSwitcherModal } from "@/components/station-switcher-modal";
+import { EmailInboxModal } from "@/components/email-inbox-modal";
+import { MapPin, Mail, ChevronDown } from "lucide-react";
 
 const NAV = [
-  { to: "/dashboard", label: "/ CONTROL" },
-  { to: "/requests", label: "/ REQUESTS" },
-  { to: "/what-if", label: "/ WHAT-IF" },
-  { to: "/plan", label: "/ PLAN" },
-  { to: "/planning", label: "/ APPROVALS" },
+  { to: "/dashboard", label: "/ DASHBOARD" },
+  { to: "/schedule", label: "/ SCHEDULE" },
   { to: "/priority", label: "/ PRIORITY" },
-  { to: "/tasks", label: "/ TASKS" },
   { to: "/assets", label: "/ ASSETS" },
   { to: "/risks", label: "/ RISKS" },
   { to: "/map", label: "/ MAP" },
@@ -97,27 +97,47 @@ function StatusLamp({
 export function SiteShell({ children }: { children: ReactNode }) {
   const backend = useQuery(backendHealthQuery);
   const engine = useEngineHealth();
+  const { activeStation, userProfile, unreadCount, setIsInboxOpen } = useStation();
+  const [isStationModalOpen, setIsStationModalOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-ink text-cream">
       <div className="dusk pointer-events-none absolute inset-x-0 top-0 h-[420px] opacity-90" />
       <div className="vignette pointer-events-none absolute inset-x-0 top-0 h-[460px]" />
 
-      <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/70 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-6">
-          <Link to="/" className="flex shrink-0 items-center gap-3">
-            <span className="chrome grid size-8 place-items-center rounded-md font-display text-sm font-bold">
-              S
-            </span>
-            <span className="leading-none">
-              <span className="block font-display text-sm font-semibold tracking-wide">
-                SHADOWBLOCK
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex shrink-0 items-center gap-3">
+              <span className="chrome grid size-8 place-items-center rounded-md font-display text-sm font-bold">
+                S
               </span>
-              <span className="block font-mono text-[10px] tracking-[0.2em] text-steel">
-                BLOCK PLANNER · CONTROL
+              <span className="leading-none hidden sm:block">
+                <span className="block font-display text-sm font-semibold tracking-wide">
+                  BLOCK-AI
+                </span>
+                <span className="block font-mono text-[10px] tracking-[0.2em] text-steel">
+                  AI BLOCK PLANNER
+                </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+
+            {/* Station Switcher Button */}
+            <button
+              onClick={() => setIsStationModalOpen(true)}
+              className="flex items-center gap-2 rounded-md border border-line bg-ink3/60 px-2.5 py-1.5 font-mono text-xs text-cream transition hover:border-signal/80 hover:bg-ink3"
+              title="Click to switch Indian Railways station"
+            >
+              <MapPin className="size-3.5 text-signal" />
+              <span className="font-bold text-signal">{activeStation.code}</span>
+              <span className="text-steel hidden md:inline">· {activeStation.name}</span>
+              <span className="rounded bg-signal/15 px-1.5 py-0.2 text-[10px] text-signal font-semibold hidden lg:inline">
+                {activeStation.zone.split(" ")[0]} · {activeStation.division.split(" ")[0]}
+              </span>
+              <ChevronDown className="size-3 text-steel" />
+            </button>
+          </div>
+
           <nav className="hidden items-center gap-0.5 font-mono text-[11px] text-steel 2xl:flex">
             {NAV.map((item) => (
               <Link
@@ -130,7 +150,25 @@ export function SiteShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="flex shrink-0 items-center gap-4 font-mono text-[11px]">
+
+          <div className="flex shrink-0 items-center gap-3 font-mono text-[11px]">
+            {/* Engineer Mailbox Button */}
+            <button
+              onClick={() => setIsInboxOpen(true)}
+              className="relative flex items-center gap-2 rounded-md border border-line bg-ink3/40 px-3 py-1.5 text-xs text-cream hover:border-signal/70 hover:bg-ink3 transition"
+              title={`Logged in as ${userProfile.email}`}
+            >
+              <Mail className="size-3.5 text-signal" />
+              <span className="hidden sm:inline font-mono text-[11px] text-steel max-w-[140px] truncate">
+                {userProfile.email.split("@")[0]}
+              </span>
+              {unreadCount > 0 ? (
+                <span className="flex size-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white animate-pulse">
+                  {unreadCount}
+                </span>
+              ) : null}
+            </button>
+
             <PersonaPicker />
             <StatusLamp
               label="API"
@@ -146,6 +184,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             />
           </div>
         </div>
+
         <nav className="flex flex-wrap gap-1 border-t border-line/60 px-4 py-2 font-mono text-[10px] text-steel 2xl:hidden">
           {NAV.map((item) => (
             <Link
@@ -159,6 +198,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
       </header>
+
+      <StationSwitcherModal
+        isOpen={isStationModalOpen}
+        onClose={() => setIsStationModalOpen(false)}
+      />
+
+      <EmailInboxModal />
 
       <EngineOfflineBanner />
 

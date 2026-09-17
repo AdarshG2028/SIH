@@ -60,6 +60,9 @@ const simulateWhatIf = (payload) => postML("/api/ai/what-if", payload);
 
 const generatePlan = (payload) => postML("/api/ai/generate-plan", payload);
 
+// Plans one officer's block request — returns the window options the form shows.
+const planRequest = (payload) => postML("/api/ai/plan-request", payload);
+
 const scorePriority = (payload) => postML("/api/ai/priority", payload);
 
 const getKpis = () => callML("/api/ai/kpis");
@@ -71,6 +74,7 @@ module.exports = {
   evaluateBlockRequest,
   simulateWhatIf,
   generatePlan,
+  planRequest,
   scorePriority,
   getKpis,
   checkMlHealth,

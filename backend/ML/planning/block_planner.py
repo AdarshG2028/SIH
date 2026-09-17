@@ -9,13 +9,13 @@ if str(BASE_DIR) not in sys.path:
 
 try:
     from ML.src.planning.maintenance_request_handler import parse_user_block_request
-    from ML.src.planning.data_loader import get_all_department_tasks, get_goods_forecast
+    from ML.src.planning.data_loader import get_all_department_tasks, get_goods_forecast, get_corridor_info
     from ML.src.planning.priority_scoring_model import calculate_maintenance_priority, score_tasks_batch
     from ML.src.planning.what_if_simulator import simulate_what_if_block
     from ML.src.planning.evaluation_metrics import compute_prototype_kpis
 except ImportError:
     from maintenance_request_handler import parse_user_block_request
-    from data_loader import get_all_department_tasks, get_goods_forecast
+    from data_loader import get_all_department_tasks, get_goods_forecast, get_corridor_info
     from priority_scoring_model import calculate_maintenance_priority, score_tasks_batch
     from what_if_simulator import simulate_what_if_block
     from evaluation_metrics import compute_prototype_kpis
@@ -1660,23 +1660,78 @@ def evaluate_user_request(request_payload, operational_data=None, task_data=None
 # SIH PROTOTYPE: MULTI-DEPARTMENT BLOCK OPTIMIZATION ENGINE
 # ============================================================
 
+def _default_horizon_days(planning_horizon: str) -> int:
+    """Fallback span (in days) used only when the caller gives start_date == end_date,
+    so 'weekly' and 'monthly' actually mean something even if the frontend forgets
+    to send an end_date."""
+    return 30 if str(planning_horizon).lower().startswith("month") else 7
+
+
+def _corridor_quiet_window(c_name: str) -> str:
+    """Reads the corridor's own quiet_corridor_hours from corridor_availability.json
+    instead of hardcoding 01:00 for every corridor."""
+    info = get_corridor_info(c_name) or {}
+    quiet_hours = (info.get("traffic_profile") or {}).get("quiet_corridor_hours") or []
+    if quiet_hours:
+        return str(quiet_hours[0]).split("-")[0].strip()
+    return "01:00"  # last-resort default only if the corridor isn't in the dataset
+
+
+def _best_start_time(c_name: str, block_date: str, duration_hours: float, base_start: str) -> tuple:
+    """
+    Tries the corridor's quiet-window start plus a handful of nearby offsets
+    (real corridors carry background mail/express traffic even at night, so
+    the very first candidate isn't always the lowest-conflict one) and
+    returns (start_time, end_time, sim_result) for whichever candidate has
+    the fewest real timetable conflicts.
+    """
+    base_min = time_to_minutes(base_start)
+    candidate_starts = [base_min, base_min - 30, base_min + 30, base_min - 60, base_min + 60]
+
+    best = None
+    for cand_min in candidate_starts:
+        start_time = minutes_to_time(cand_min)
+        end_time = minutes_to_time(cand_min + int(duration_hours * 60))
+        sim = simulate_what_if_block(
+            corridor=c_name,
+            proposed_date=block_date,
+            proposed_start_time=start_time,
+            proposed_end_time=end_time
+        )
+        n_conflicts = len(sim.get("conflicting_trains", []))
+        if best is None or n_conflicts < best[3]:
+            best = (start_time, end_time, sim, n_conflicts)
+        if n_conflicts == 0:
+            break
+
+    return best[0], best[1], best[2]
+
+
 def generate_sih_optimized_plan(
     planning_horizon: str = "weekly",
     start_date: str = "2026-09-16",
     end_date: str = "2026-09-22",
     corridor: str = None,
-    task_ids: list = None
+    task_ids: list = None,
+    max_tasks_per_block: int = 3
 ) -> dict:
     """
     Generates an optimized block plan conforming strictly to the SIH Prototype
     Task Specification (Section 3 & Section 6):
-    - Ingests TMS, SMMS, TDMS maintenance data
+    - Ingests TMS, SMMS, TDMS maintenance data (ML-risk enriched via data_loader)
     - Uses priority_scoring_model (0–100) to prioritize critical tasks
     - Coordinates multi-department activities into joint shadow blocks
-    - Performs train timetable & goods train conflict verification
+    - Spreads ALL pending tasks (not just the top 3) across every available
+      night within [start_date, end_date], so a weekly horizon and a monthly
+      horizon genuinely produce different schedules
+    - Searches nearby start times within each corridor's quiet window and
+      picks the one with the fewest real train conflicts, instead of
+      blindly using a single fixed slot
+    - Performs train timetable & goods train conflict verification against
+      the real national schedule dataset
     - Outputs exact SIH schema with affected_trains, affected_assets, and KPIs
     """
-    # 1. Load tasks across TMS, SMMS, TDMS
+    # 1. Load tasks across TMS, SMMS, TDMS (already ML-risk enriched)
     all_tasks = get_all_department_tasks(corridor=corridor)
     if task_ids:
         all_tasks = [t for t in all_tasks if (t.get("task_id") or t.get("taskId")) in task_ids]
@@ -1685,11 +1740,35 @@ def generate_sih_optimized_plan(
         # Fallback to local task fixture if SIH dataset is empty
         all_tasks = get_all_department_tasks()
 
-    # 2. Score and rank tasks
+    # 2. Score and rank tasks (now driven by real ml_probability when known)
     scored_tasks = score_tasks_batch(all_tasks)
     priority_map = {st["task_id"]: st for st in scored_tasks}
 
-    # 3. Group tasks by corridor / section
+    # 3. Resolve the planning horizon into a concrete list of available nights.
+    #    If the caller passed a real multi-day range, honor it; otherwise fall
+    #    back to a sensible default span for "weekly" vs "monthly" so the
+    #    horizon parameter isn't just a label.
+    try:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        start_dt = datetime.strptime("2026-09-16", "%Y-%m-%d")
+        start_date = start_dt.strftime("%Y-%m-%d")
+
+    try:
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        end_dt = None
+
+    if end_dt is None or end_dt <= start_dt:
+        end_dt = start_dt + timedelta(days=_default_horizon_days(planning_horizon) - 1)
+        end_date = end_dt.strftime("%Y-%m-%d")
+
+    horizon_days = max(1, (end_dt - start_dt).days + 1)
+    available_dates = [
+        (start_dt + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(horizon_days)
+    ]
+
+    # 4. Group tasks by corridor / section
     corridor_groups = {}
     for task in all_tasks:
         c_key = task.get("corridor") or "LNL-PUNE"
@@ -1699,101 +1778,123 @@ def generate_sih_optimized_plan(
     block_counter = 1
 
     for c_name, c_tasks in corridor_groups.items():
-        # Separate tasks into high/critical vs flexible
+        # Priority order within this corridor
         c_tasks_sorted = sorted(
             c_tasks,
             key=lambda t: priority_map.get(t.get("task_id", ""), {}).get("priority_score", 50),
             reverse=True
         )
 
-        # Primary cluster: High & Critical tasks in same corridor
-        primary_tasks = c_tasks_sorted[:3]  # bundle top compatible tasks
-        departments_involved = sorted(list(set(t.get("department", "Engineering") for t in primary_tasks)))
-        assets_involved = sorted(list(set(t.get("asset_id", "UNKNOWN") for t in primary_tasks if t.get("asset_id"))))
-        
-        # Max duration among co-located tasks defines the block length
-        block_duration = max(float(t.get("estimated_duration", 2.5)) for t in primary_tasks)
-        
-        # Choose prime quiet corridor window (01:00 - 04:30)
-        start_time = "01:00"
-        end_min = time_to_minutes(start_time) + int(block_duration * 60)
-        end_time = minutes_to_time(end_min)
+        # Split ALL of this corridor's backlog into bundles of up to
+        # max_tasks_per_block tasks each (instead of only keeping the top 3
+        # and silently dropping the rest). Each bundle becomes its own block,
+        # placed on the next available night in the horizon. If there are
+        # more bundles than nights, later bundles wrap onto reused nights
+        # rather than being lost — a real division would add a 3rd/4th
+        # corridor block per night here, which is a natural extension point.
+        bundles = [
+            c_tasks_sorted[i:i + max_tasks_per_block]
+            for i in range(0, len(c_tasks_sorted), max_tasks_per_block)
+        ]
 
-        # Verify train timetable conflicts
-        sim = simulate_what_if_block(
-            corridor=c_name,
-            proposed_date=start_date,
-            proposed_start_time=start_time,
-            proposed_end_time=end_time
-        )
-        affected_trains = sim.get("conflicting_trains", [])
+        quiet_start_time = _corridor_quiet_window(c_name)
 
-        # Calculate optimization score
-        opt_score = 98.0
-        if len(departments_involved) > 1:
-            opt_score += 2.0  # Bonus for multi-department co-location
-        if affected_trains:
-            opt_score -= len(affected_trains) * 15.0
+        for bundle_idx, primary_tasks in enumerate(bundles):
+            block_date = available_dates[bundle_idx % len(available_dates)]
 
-        # Calculate downtime saved
-        individual_hours = sum(float(t.get("estimated_duration", 2.0)) for t in primary_tasks)
-        downtime_saved = max(0.0, individual_hours - block_duration)
+            departments_involved = sorted(list(set(t.get("department", "Engineering") for t in primary_tasks)))
+            assets_involved = sorted(list(set(t.get("asset_id", "UNKNOWN") for t in primary_tasks if t.get("asset_id"))))
 
-        recommendation_text = (
-            f"Consolidated {len(primary_tasks)} tasks across {len(departments_involved)} departments "
-            f"({', '.join(departments_involved)}) into a single {block_duration}h shadow block. "
-            f"Zero train conflicts detected. Avoided {downtime_saved:.1f}h of separate corridor closures."
-        )
+            # Max duration among co-located tasks defines the block length
+            block_duration = max(float(t.get("estimated_duration", 2.5)) for t in primary_tasks)
 
-        loc_desc = primary_tasks[0].get("location") or f"{c_name} Section"
+            # Search nearby start times and keep the one with fewest real
+            # timetable conflicts, instead of blindly using the raw quiet
+            # window open time.
+            start_time, end_time, sim = _best_start_time(
+                c_name, block_date, block_duration, quiet_start_time
+            )
+            affected_trains = sim.get("conflicting_trains", [])
 
-        block_obj = {
-            "block_id": f"BLOCK-{c_name}-{block_counter:02d}",
-            "date": start_date,
-            "corridor": c_name,
-            "location": loc_desc,
-            "start_time": start_time,
-            "end_time": end_time,
-            "duration": block_duration,
-            "selected_tasks": [
-                {
-                    "task_id": t.get("task_id"),
-                    "department": t.get("department"),
-                    "task_type": t.get("task_type"),
-                    "asset_id": t.get("asset_id"),
-                    "priority_score": priority_map.get(t.get("task_id", ""), {}).get("priority_score", 50),
-                    "priority_level": priority_map.get(t.get("task_id", ""), {}).get("priority_level", "Medium"),
-                    "estimated_duration": t.get("estimated_duration", 2.0)
-                }
-                for t in primary_tasks
-            ],
-            "departments": departments_involved,
-            "affected_assets": assets_involved,
-            "affected_trains": affected_trains,
-            "optimization_score": round(min(100.0, opt_score), 1),
-            "reason_recommendation": recommendation_text
-        }
-        generated_blocks.append(block_obj)
-        block_counter += 1
+            # Calculate optimization score. Real mainline corridors carry
+            # background mail/express traffic even overnight, so conflicts
+            # are graded (not treated as a binary pass/fail) and the score
+            # is clamped to a sane 0-100 range.
+            opt_score = 100.0
+            if len(departments_involved) > 1:
+                opt_score += 2.0  # bonus for multi-department co-location
+            opt_score -= min(60.0, len(affected_trains) * 2.0)
+            opt_score = max(0.0, min(100.0, opt_score))
 
-    # 4. Compute before vs after KPIs
-    kpi_report = compute_prototype_kpis(generated_blocks)
+            # Calculate downtime saved
+            individual_hours = sum(float(t.get("estimated_duration", 2.0)) for t in primary_tasks)
+            downtime_saved = max(0.0, individual_hours - block_duration)
+
+            recommendation_text = (
+                f"Consolidated {len(primary_tasks)} tasks across {len(departments_involved)} departments "
+                f"({', '.join(departments_involved)}) into a single {block_duration}h shadow block on {block_date}. "
+                f"{'Zero train conflicts detected.' if not affected_trains else f'{len(affected_trains)} train conflict(s) flagged for review.'} "
+                f"Avoided {downtime_saved:.1f}h of separate corridor closures."
+            )
+
+            loc_desc = primary_tasks[0].get("location") or f"{c_name} Section"
+
+            block_obj = {
+                "block_id": f"BLOCK-{c_name}-{block_counter:02d}",
+                "date": block_date,
+                "corridor": c_name,
+                "location": loc_desc,
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration": block_duration,
+                "selected_tasks": [
+                    {
+                        "task_id": t.get("task_id"),
+                        "department": t.get("department"),
+                        "task_type": t.get("task_type"),
+                        "asset_id": t.get("asset_id"),
+                        "priority_score": priority_map.get(t.get("task_id", ""), {}).get("priority_score", 50),
+                        "priority_level": priority_map.get(t.get("task_id", ""), {}).get("priority_level", "Medium"),
+                        "estimated_duration": t.get("estimated_duration", 2.0)
+                    }
+                    for t in primary_tasks
+                ],
+                "departments": departments_involved,
+                "affected_assets": assets_involved,
+                "affected_trains": affected_trains,
+                "optimization_score": round(min(100.0, opt_score), 1),
+                "reason_recommendation": recommendation_text
+            }
+            generated_blocks.append(block_obj)
+            block_counter += 1
+
+    # 5. Compute before vs after KPIs from the actual task list and horizon,
+    #    not from fixed demo constants.
+    kpi_report = compute_prototype_kpis(
+        generated_blocks,
+        all_tasks=all_tasks,
+        horizon_days=horizon_days,
+        corridor_count=len(corridor_groups)
+    )
 
     return {
         "planning_horizon": planning_horizon,
         "start_date": start_date,
         "end_date": end_date,
+        "horizon_days": horizon_days,
         "corridor": corridor or "ALL_CORRIDORS",
         "total_tasks_processed": len(all_tasks),
+        "total_tasks_scheduled": sum(len(b["selected_tasks"]) for b in generated_blocks),
         "generated_blocks": generated_blocks,
-        "task_priorities": scored_tasks[:10],
+        "task_priorities": scored_tasks,
         "conflicts": [trn for b in generated_blocks for trn in b["affected_trains"]],
         "kpis": kpi_report["kpis"],
         "before_vs_after_evaluation": kpi_report["before_vs_after"],
         "recommendations": [
-            "Execute integrated overnight shadow blocks between 01:00 and 04:30 to maximize punctuality.",
-            "Traction power block on LNL-PUNE to be synchronized with track tamping to avoid repeat line shutoff.",
-            "Deccan Express and local suburban EMU peak flows (07:30-10:30) protected with zero train conflict."
+            f"Execute integrated overnight shadow blocks during each corridor's own quiet window "
+            f"across all {horizon_days} day(s) of this {planning_horizon} plan.",
+            "Co-locate departments wherever their tasks share a corridor to avoid repeat line shutoffs.",
+            "Review any night with flagged train conflicts before submitting to BDMS."
         ]
     }
 

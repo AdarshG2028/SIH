@@ -2,10 +2,12 @@ const express = require("express");
 
 const {
   createBlockRequest,
+  planBlockRequest,
   listBlockRequests,
   getBlockRequest,
   selectAlternative,
   decideBlockRequest,
+  completeBlockRequest,
   mlHealth,
 } = require("../controllers/blockRequest.controller");
 const {
@@ -29,5 +31,7 @@ router.get("/block-requests", listBlockRequests);
 router.get("/block-requests/:requestId", getBlockRequest);
 router.patch("/block-requests/:requestId/window", selectAlternative);
 router.patch("/block-requests/:requestId/decision", decideBlockRequest);
+router.patch("/block-requests/:requestId/complete", completeBlockRequest);
+router.post("/plan-request", planBlockRequest);
 
 module.exports = router;
